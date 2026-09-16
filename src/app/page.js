@@ -1,69 +1,249 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const [mode, setMode] = useState("register");
+  const [message, setMessage] = useState("");
+  const [isGuest, setIsGuest] = useState(true);
+
+  const isRegistering = mode === "register";
+
+  if (status === "authenticated") {
+    return <Dashboard user={session.user} />;
+  }
+
+  function changeMode(nextMode) {
+    setMode(nextMode);
+    setMessage("");
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    setMessage(
+      isRegistering
+        ? "Your account details are ready. Connect the signup API to finish registration."
+        : "Your login details are ready. Connect the auth API to continue."
+    );
+  }
+
+  function handleGoogle() {
+    signIn("google", { callbackUrl: "/" });
+  }
+
+  if (isGuest) {
+    return (
+      <main className="guest-home">
+        <header className="guest-header">
+          <div className="brand-mark">
+            <span className="brand-icon">O</span>
+            <span>OA Duck</span>
+          </div>
+          <button className="guest-login-button" type="button" onClick={() => setIsGuest(false)}>
+            Login or register
+          </button>
+        </header>
+        <section className="guest-content">
+          <p className="eyebrow">Guest mode</p>
+          <h1>Welcome to your practice space.</h1>
+          <p>
+            Explore OA Duck and start working through questions. Create an
+            account later when you want to save your progress.
+          </p>
+          <div className="guest-actions">
+            <button className="submit-button" type="button">Explore questions <span aria-hidden="true">&#8594;</span></button>
+            <span className="guest-note">No account required</span>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.js
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="auth-shell">
+      <section className="welcome-panel">
+        <div className="brand-mark" aria-label="OA Duck home">
+          <span className="brand-icon">O</span>
+          <span>OA Duck</span>
+        </div>
+        <div className="welcome-copy">
+          <p className="eyebrow">A calmer way to practice</p>
+          <h1>Build better answers, one question at a time.</h1>
+          <p className="welcome-description">
+            Keep your problem-solving streak moving with a focused workspace for
+            questions, hints, and thoughtful progress.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="welcome-footer">
+          <span className="footer-line" />
+          <span>Learn clearly. Practice often.</span>
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="auth-panel">
+        <div className="auth-card">
+          <div className="mobile-brand brand-mark">
+            <span className="brand-icon">O</span>
+            <span>OA Duck</span>
+          </div>
+          <div className="auth-heading">
+            <p className="eyebrow">Welcome to OA Duck</p>
+            <h2>{isRegistering ? "Start your practice" : "Welcome back"}</h2>
+            <p>
+              {isRegistering
+                ? "Create an account and make your next session count."
+                : "Pick up where your practice left off."}
+            </p>
+          </div>
+
+          <div className="mode-switch" role="tablist" aria-label="Authentication mode">
+            <button
+              className={isRegistering ? "active" : ""}
+              onClick={() => changeMode("register")}
+              role="tab"
+              aria-selected={isRegistering}
+              type="button"
+            >
+              Register
+            </button>
+            <button
+              className={!isRegistering ? "active" : ""}
+              onClick={() => changeMode("login")}
+              role="tab"
+              aria-selected={!isRegistering}
+              type="button"
+            >
+              Login
+            </button>
+          </div>
+
+          <button className="google-button" type="button" onClick={handleGoogle}>
+            <span className="google-icon" aria-hidden="true">G</span>
+            {isRegistering ? "Sign up with Google" : "Continue with Google"}
+          </button>
+
+          <div className="divider"><span>or continue with email</span></div>
+
+          <form onSubmit={handleSubmit}>
+            {isRegistering && (
+              <div className="field-row">
+                <label>
+                  Full name
+                  <input name="name" type="text" placeholder="Alex Morgan" required />
+                </label>
+                <label>
+                  Username
+                  <input name="username" type="text" placeholder="alexm" required />
+                </label>
+              </div>
+            )}
+            <label>
+              Email address
+              <input name="email" type="email" placeholder="you@example.com" required />
+            </label>
+            <label>
+              Password
+              <input name="password" type="password" placeholder="At least 8 characters" minLength={8} required />
+            </label>
+            {isRegistering && (
+              <label>
+                Confirm password
+                <input name="confirmPassword" type="password" placeholder="Repeat your password" minLength={8} required />
+              </label>
+            )}
+            {!isRegistering && (
+              <div className="form-options">
+                <label className="checkbox-label">
+                  <input type="checkbox" name="remember" />
+                  Remember me
+                </label>
+                <button type="button" className="text-button">Forgot password?</button>
+              </div>
+            )}
+            <button className="submit-button" type="submit">
+              {isRegistering ? "Create account" : "Log in"}
+              <span aria-hidden="true">&#8594;</span>
+            </button>
+          </form>
+
+          {message && <p className="form-message" role="status">{message}</p>}
+
+          <p className="terms-copy">
+            By continuing, you agree to our <button type="button" className="text-button">Terms</button> and <button type="button" className="text-button">Privacy Policy</button>.
+          </p>
+          <button className="guest-button" type="button" onClick={() => setIsGuest(true)}>
+            Continue as guest
+          </button>
+        </div>
+        <p className="copyright">© 2026 OA Duck</p>
+      </section>
+    </main>
+  );
+}
+
+function Dashboard({ user }) {
+  const username = user.email?.split("@")[0] || "learner";
+  const firstName = user.name?.split(" ")[0] || "there";
+
+  return (
+    <main className="dashboard-shell">
+      <header className="dashboard-header">
+        <div className="brand-mark dashboard-brand">
+          <span className="brand-icon">O</span>
+          <span>OA Duck</span>
+        </div>
+        <div className="profile-menu">
+          {user.image ? (
+            <img className="profile-avatar" src={user.image} alt={`${user.name || "User"} profile`} />
+          ) : (
+            <span className="profile-avatar profile-fallback">{(user.name || "U")[0]}</span>
+          )}
+          <div className="profile-details">
+            <strong>{user.name || "OA Duck learner"}</strong>
+            <span>@{username}</span>
+          </div>
+          <button className="signout-button" type="button" onClick={() => signOut({ callbackUrl: "/" })}>
+            Sign out
+          </button>
+        </div>
+      </header>
+
+      <section className="dashboard-content">
+        <div className="dashboard-intro">
+          <div>
+            <p className="eyebrow">Your workspace</p>
+            <h1>Good to see you, {firstName}.</h1>
+            <p>Choose a practice path and keep your problem-solving momentum going.</p>
+          </div>
+          <div className="account-chip">
+            <span className="status-dot" />
+            <span>{user.email}</span>
+          </div>
+        </div>
+
+        <div className="dashboard-grid">
+          <button className="dashboard-card dashboard-card-primary" type="button">
+            <span className="card-kicker">Start here</span>
+            <strong>Practice a question</strong>
+            <span>Work through a fresh problem at your pace.</span>
+            <span className="card-arrow" aria-hidden="true">&#8594;</span>
+          </button>
+          <button className="dashboard-card" type="button">
+            <span className="card-kicker">Browse</span>
+            <strong>Question library</strong>
+            <span>Explore curated questions and build a routine.</span>
+            <span className="card-arrow" aria-hidden="true">&#8594;</span>
+          </button>
+          <div className="progress-card">
+            <span className="card-kicker">Your progress</span>
+            <strong>Ready when you are</strong>
+            <span>Complete your first session to see your stats here.</span>
+            <div className="progress-bar"><span /></div>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }

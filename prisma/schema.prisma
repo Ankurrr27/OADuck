@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String     @id @default(uuid()) @db.Uuid
+  email     String     @unique
+  name      String?
+  username  String?    @unique
+  image     String?
+  role      String
+  questions Question[]
+  sheets    Sheet[]
+  sessions  Session[]
+
+  @@map("user")
+}
+
+model Question {
+  id               String            @id @default(uuid()) @db.Uuid
+  questionNumber   Int               @map("question_number")
+  difficulty       String
+  createdById      String            @map("created_by") @db.Uuid
+  createdBy        User              @relation(fields: [createdById], references: [id])
+  hints            Hint[]
+  sessions         Session[]
+  testCases        TestCase[]
+  optimalSolutions OptimalSolution[]
+  sheetQuestions   SheetQuestion[]
+
+  @@map("question")
+}
+
+model Sheet {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String
+  createdById    String          @map("created_by") @db.Uuid
+  createdBy      User            @relation(fields: [createdById], references: [id])
+  sheetQuestions SheetQuestion[]
+
+  @@map("sheet")
+}
+
+model SheetQuestion {
+  sheetId    String   @map("sheet_id") @db.Uuid
+  questionId String   @map("question_id") @db.Uuid
+  sheet      Sheet    @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([sheetId, questionId])
+  @@map("sheet_question")
+}
+
+model TestCase {
+  id          String       @id @default(uuid()) @db.Uuid
+  questionId  String       @map("question_id") @db.Uuid
+  isSample    Boolean      @map("is_sample")
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+
+  @@map("test_case")
+}
+
+model OptimalSolution {
+  id         String   @id @default(uuid()) @db.Uuid
+  questionId String   @map("question_id") @db.Uuid
+  language   String
+  code       String   @db.Text
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("optimal_solution")
+}
+
+model Session {
+  id                String            @id @default(uuid()) @db.Uuid
+  userId            String            @map("user_id") @db.Uuid
+  questionId        String            @map("question_id") @db.Uuid
+  terminationReason String?           @map("termination_reason")
+  user              User              @relation(fields: [userId], references: [id])
+  question          Question          @relation(fields: [questionId], references: [id])
+  hints             SessionHintView[]
+  doubtQueries      DoubtQuery[]
+  submissions       Submission[]
+
+  @@map("session")
+}
+
+model Hint {
+  id           String            @id @default(uuid()) @db.Uuid
+  questionId   String            @map("question_id") @db.Uuid
+  hintOrder    Int               @map("hint_order")
+  question     Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  sessionViews SessionHintView[]
+
+  @@map("hint")
+}
+
+model SessionHintView {
+  id        String  @id @default(uuid()) @db.Uuid
+  sessionId String  @map("session_id") @db.Uuid
+  hintId    String  @map("hint_id") @db.Uuid
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  hint      Hint    @relation(fields: [hintId], references: [id], onDelete: Cascade)
+
+  @@map("session_hint_view")
+}
+
+model DoubtQuery {
+  id        String  @id @default(uuid()) @db.Uuid
+  sessionId String  @map("session_id") @db.Uuid
+  queryText String  @map("query_text") @db.Text
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("doubt_query")
+}
+
+model Submission {
+  id               String    @id @default(uuid()) @db.Uuid
+  sessionId        String    @map("session_id") @db.Uuid
+  language         String
+  status           String
+  failedTestCaseId String?   @map("failed_test_case_id") @db.Uuid
+  actualOutput     String?   @map("actual_output") @db.Text
+  errorMessage     String?   @map("error_message") @db.Text
+  session          Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  failedTestCase   TestCase? @relation(fields: [failedTestCaseId], references: [id])
+
+  @@map("submission")
+}
