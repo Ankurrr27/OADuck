@@ -77,12 +77,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { email: token.email },
           select: { role: true },
         });
+
         token.role = databaseUser?.role;
       }
 
+      delete token.name;
+      delete token.picture;
+
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token, trigger, newSession }) {
+      if (token.email) {
+        const databaseUser = await prisma.user.findUnique({
+          where: { email: token.email },
+          select: { name: true, image: true },
+        });
+
+        session.user.name = databaseUser?.name;
+        session.user.image = databaseUser?.image;
+      }
+
+      if (trigger === "update" && newSession) {
+        if (Object.prototype.hasOwnProperty.call(newSession, "name")) {
+          session.user.name = newSession.name;
+        }
+        if (Object.prototype.hasOwnProperty.call(newSession, "image")) {
+          session.user.image = newSession.image;
+        }
+      }
+
       session.user.role = token.role;
       return session;
     },

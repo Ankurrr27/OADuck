@@ -772,6 +772,12 @@ input[type="checkbox"] {
   object-fit: cover;
 }
 
+.profile-image-preview {
+  display: block;
+  border: 3px solid #dfe8df;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
 .profile-image-fallback {
   display: grid;
   place-items: center;
@@ -784,6 +790,7 @@ input[type="checkbox"] {
 .profile-image-editor > div {
   display: grid;
   gap: 6px;
+  align-content: center;
 }
 
 .profile-image-editor strong {
@@ -817,6 +824,21 @@ input[type="checkbox"] {
   font-weight: 400;
 }
 
+.image-remove-button {
+  width: fit-content;
+  border: 0;
+  padding: 0;
+  color: #a35d51;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.image-remove-button:hover {
+  text-decoration: underline;
+}
+
 .profile-form textarea {
   width: 100%;
   resize: vertical;
@@ -845,6 +867,11 @@ input[type="checkbox"] {
   background: var(--green);
   font-size: 13px;
   font-weight: 650;
+}
+
+.inner-page-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .save-message {
