@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "OA Duck | Practice with purpose",
   description: "A focused workspace for better problem-solving practice.",
+  icons: {
+    icon: "/OADuck.png",
+    shortcut: "/OADuck.png",
+    apple: "/OADuck.png",
+  },
 };
 
 export default function RootLayout({ children }) {
