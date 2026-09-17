@@ -11,6 +11,8 @@ export async function PUT(request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // hiii
+
   const body = await request.json();
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const image = typeof body.image === "string" ? body.image : null;
