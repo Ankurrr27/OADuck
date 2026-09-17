@@ -7,11 +7,60 @@ import BrandLogo from "./BrandLogo";
 
 export default function AuthForm({ initialMode = "login" }) {
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isRegistering = initialMode === "register";
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    setMessage(isRegistering ? "Your account details are ready. Connect the signup API to finish registration." : "Your login details are ready. Connect the auth API to continue.");
+    setMessage("");
+    setIsSubmitting(true);
+
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    try {
+      if (isRegistering) {
+        if (password !== formData.get("confirmPassword")) {
+          setMessage("Passwords do not match.");
+          return;
+        }
+
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.get("name"),
+            username: formData.get("username"),
+            email,
+            password,
+          }),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          setMessage(result.error || "Unable to create your account.");
+          return;
+        }
+      }
+
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (!result?.ok) {
+        setMessage("Invalid email or password.");
+        return;
+      }
+
+      window.location.assign("/");
+    } catch {
+      setMessage("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleGoogle() {
@@ -48,7 +97,7 @@ export default function AuthForm({ initialMode = "login" }) {
             <label>Password<input name="password" type="password" placeholder="At least 8 characters" minLength={8} required /></label>
             {isRegistering && <label>Confirm password<input name="confirmPassword" type="password" placeholder="Repeat your password" minLength={8} required /></label>}
             {!isRegistering && <div className="form-options"><label className="checkbox-label"><input type="checkbox" name="remember" />Remember me</label><button type="button" className="text-button">Forgot password?</button></div>}
-            <button className="submit-button" type="submit">{isRegistering ? "Create account" : "Log in"}<span aria-hidden="true">&#8594;</span></button>
+            <button className="submit-button" type="submit" disabled={isSubmitting}>{isSubmitting ? "Working..." : isRegistering ? "Create account" : "Log in"}<span aria-hidden="true">&#8594;</span></button>
           </form>
           {message && <p className="form-message" role="status">{message}</p>}
           <p className="terms-copy">By continuing, you agree to our <button type="button" className="text-button">Terms</button> and <button type="button" className="text-button">Privacy Policy</button>.</p>

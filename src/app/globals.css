@@ -874,6 +874,161 @@ input[type="checkbox"] {
   font-size: 18px;
 }
 
+.admin-page-content {
+  max-width: 1120px !important;
+}
+
+.admin-heading-row,
+.admin-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-identity {
+  display: grid;
+  gap: 5px;
+  min-width: 210px;
+  border-left: 1px solid var(--line);
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.admin-identity strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 48px;
+}
+
+.admin-stat-card {
+  display: grid;
+  min-height: 145px;
+  align-content: space-between;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  background: #fffefa;
+}
+
+.admin-stat-card span,
+.admin-stat-card small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.admin-stat-card strong {
+  color: var(--green);
+  font-size: 38px;
+  font-weight: 500;
+  letter-spacing: -0.06em;
+}
+
+.admin-section-heading {
+  align-items: center;
+  margin-top: 58px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+
+.admin-section-heading .eyebrow {
+  margin-bottom: 7px;
+}
+
+.admin-section-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.admin-section-heading > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-user-list {
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-user-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border-bottom: 1px solid var(--line);
+  padding: 14px 4px;
+}
+
+.admin-user-row:last-child {
+  border-bottom: 0;
+}
+
+.admin-user-avatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 50%;
+  color: #f7f5ed;
+  background: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-user-details {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-user-details strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-user-details span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-role {
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.admin-role-admin {
+  color: #835d22;
+  background: #f5ead2;
+}
+
+.admin-role-user {
+  color: var(--green);
+  background: #e2eee5;
+}
+
 .option-list {
   display: grid;
   gap: 14px;
