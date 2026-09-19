@@ -1,10 +1,7 @@
-import { auth } from "./src/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "./src/auth.config";
 
-export default auth((request) => {
-  if (!request.auth) {
-    return Response.redirect(new URL("/", request.url));
-  }
-});
+export default NextAuth(authConfig).auth;
 
 export const config = {
   matcher: [

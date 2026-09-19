@@ -3,6 +3,7 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import prisma from "./lib/prisma";
 import bcrypt from "bcryptjs";
+import { authConfig } from "./auth.config";
 
 async function generateUniqueUsername(name) {
   let baseUsername = name ? name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'user';
@@ -22,6 +23,7 @@ async function generateUniqueUsername(name) {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
     Google,
     Credentials({
@@ -54,9 +56,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
     })
   ],
-  session: {
-    strategy: "jwt",
-  },
   callbacks: {
     async signIn({ user, account }) {
       if (!user.email) return false;
