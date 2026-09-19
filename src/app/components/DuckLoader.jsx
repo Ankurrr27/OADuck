@@ -14,7 +14,7 @@ export default function DuckLoader({ label = "Loading your workspace…", compac
           preload
         />
       </div>
-      <span className="duck-loader__label">{label}</span>
+      {label && <span className="duck-loader__label">{label}</span>}
     </div>
   );
 }

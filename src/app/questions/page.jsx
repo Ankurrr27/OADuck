@@ -2,32 +2,24 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import Sidebar from "../components/Sidebar";
 import AppHeader from "../components/AppHeader";
 
-const difficultyColor = {
-  Easy: "#22c55e",
-  Medium: "#f59e0b",
-  Hard: "#ef4444",
-};
+const difficultyColor = { Easy: "#22c55e", Medium: "#f59e0b", Hard: "#ef4444" };
 
 export default function QuestionsPage() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
-  const { data: session } = useSession();
 
   useEffect(() => {
     async function fetchQuestions() {
       try {
         const res = await fetch("/api/questions");
         const data = await res.json();
-        if (data.success) {
-          setQuestions(data.questions);
-        }
-      } catch (err) {
-        console.error("Failed to fetch questions:", err);
+        if (data.success) setQuestions(data.questions);
+      } catch (error) {
+        console.error("Failed to fetch questions:", error);
       } finally {
         setLoading(false);
       }
@@ -35,100 +27,61 @@ export default function QuestionsPage() {
     fetchQuestions();
   }, []);
 
-  const filtered = filter === "All" ? questions : questions.filter(q => q.difficulty === filter);
+  const filtered = filter === "All" ? questions : questions.filter((question) => question.difficulty === filter);
 
   return (
     <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
       <AppHeader />
-      <div className="flex min-h-[calc(100vh-60px)] ">
+      <div className="flex min-h-[calc(100vh-60px)]">
         <Sidebar />
-        <section className="w-full max-w-[1200px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19 workspace-page-content">
+        <section className="w-full max-w-[1280px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-12 md:py-16">
           <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">Question library</p>
-          <h1>Find your next challenge.</h1>
-          <p className="mt-4 text-sm text-[#6f7771]">Browse problems imported into OA Duck and start practicing.</p>
-
-          {/* Difficulty Filter */}
-          <div className="my-6 flex flex-wrap gap-2">
-            {["All", "Easy", "Medium", "Hard"].map((f) => (
-              <button
-                key={f}
-                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[#dfe1da] bg-transparent px-4 py-1.5 text-[.85rem] font-medium text-[#6f7771] hover:border-[#123f36] hover:text-[#17221e] ${filter === f ? "border-[#123f36] bg-[#123f36] text-white" : ""}`}
-                onClick={() => setFilter(f)}
-                type="button"
-              >
-                {f === "All" ? "All" : (
-                  <>
-                    <span className="inline-block h-2 w-2 rounded-full" style={{ background: difficultyColor[f] }} />
-                    {f}
-                  </>
-                )}
-              </button>
-            ))}
+          <div className="flex flex-col gap-5 rounded-2xl border border-[#dfe1da] bg-[#fffefa] p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-8">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-[-.04em] sm:text-4xl">Find your next challenge.</h1>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-[#6f7771]">Explore questions by difficulty, follow your curiosity, and turn a quiet hour into useful practice.</p>
+            </div>
+            <div className="flex min-w-32 items-center gap-3 rounded-xl bg-[#e8f1eb] px-4 py-3 sm:justify-center">
+              <span className="text-2xl font-semibold tracking-[-.05em] text-[#123f36]">{questions.length}</span>
+              <span className="text-xs font-semibold leading-4 text-[#526057]">questions<br />available</span>
+            </div>
           </div>
 
-          {loading ? (
-            <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]">
-              <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]-spinner" />
-              <span>Loading questions...</span>
+          <div className="mt-7 rounded-2xl border border-[#dfe1da] bg-[#fffefa] p-4 shadow-sm sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div><p className="text-sm font-semibold text-[#36433b]">Choose a difficulty</p><p className="mt-1 text-xs text-[#7b867e]">Showing {filtered.length} {filtered.length === 1 ? "question" : "questions"}</p></div>
+              <div className="flex flex-wrap gap-2">
+                {["All", "Easy", "Medium", "Hard"].map((value) => (
+                  <button key={value} className={`inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-xs font-semibold transition ${filter === value ? "border-[#123f36] bg-[#123f36] text-[#fffefa] shadow-sm" : "border-[#dfe1da] bg-[#fffefa] text-[#66736b] hover:border-[#92af9e] hover:bg-[#f4f7f3]"}`} onClick={() => setFilter(value)} type="button">
+                    {value !== "All" && <span className="h-2 w-2 rounded-full" style={{ background: difficultyColor[value] }} />}{value}
+                  </button>
+                ))}
+              </div>
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-16 text-center">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9 9h.01M15 9h.01M8 14s1.5 2 4 2 4-2 4-2"/>
-              </svg>
-              <p>No questions yet.</p>
-              <span>Import a problem from LeetCode to get started.</span>
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-[#dfe1da] bg-white">
-              <table className="w-full border-collapse text-[.9rem] [&_thead]:bg-[#fafaf7] [&_th]:border-b [&_th]:border-[#dfe1da] [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-[.78rem] [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-[.04em] [&_th]:text-[#6f7771] [&_td]:border-b [&_td]:border-[#f0efe8] [&_td]:px-4 [&_td]:py-3 [&_td]:align-middle [&_a]:font-semibold [&_a]:text-[#17221e] [&_a]:no-underline">
-                <thead>
-                  <tr>
-                    <th className="w-12.5">#</th>
-                    <th>Title</th>
-                    <th>Difficulty</th>
-                    <th>Topics</th>
-                    <th>Source</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((q) => (
-                    <tr key={q.id} className="transition-colors hover:bg-[#f8f7f2]">
-                      <td className="font-semibold tabular-nums text-[#6f7771]">{q.questionNumber}</td>
-                      <td className="font-semibold text-[#17221e]">
-                        <Link href={`/questions/${q.id}`}>{q.title || "Untitled"}</Link>
-                      </td>
-                      <td>
-                        <span className="inline-block rounded-full px-2.5 py-0.5 text-[.78rem] font-semibold" style={{ background: `${difficultyColor[q.difficulty]}18`, color: difficultyColor[q.difficulty] }}>
-                          {q.difficulty}
-                        </span>
-                      </td>
-                      <td className="flex flex-wrap items-center gap-1.5">
-                        {q.topics && q.topics.length > 0 ? (
-                          q.topics.slice(0, 3).map((t) => (
-                            <span className="inline-block whitespace-nowrap rounded-full bg-[#f0efe8] px-2.5 py-0.5 text-xs font-medium text-[#6f7771]" key={t}>{t}</span>
-                          ))
-                        ) : (
-                          <span style={{ color: "var(--muted)" }}>—</span>
-                        )}
-                        {q.topics && q.topics.length > 3 && (
-                          <span className="inline-block whitespace-nowrap rounded-full bg-[#f0efe8] px-2.5 py-0.5 text-xs font-medium text-[#6f7771] bg-[#123f36] text-white">+{q.topics.length - 3}</span>
-                        )}
-                      </td>
-                      <td className="text-center">
-                        {q.source === "leetcode" ? (
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[#ffa1161a] text-[.7rem] font-bold text-[#ffa116]">LC</span>
-                        ) : (
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[#123f36]/10 text-[.7rem] font-bold text-[#123f36]">OA</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-2xl border border-[#dfe1da] bg-[#fffefa] shadow-sm">
+            {loading ? (
+              <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-[#6f7771]"><span className="grid h-10 w-10 place-items-center rounded-full border-2 border-[#d8e3db] border-t-[#176a5a] text-xs animate-spin">◌</span><span className="text-sm font-medium">Gathering questions…</span></div>
+            ) : filtered.length === 0 ? (
+              <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-[#e8f1eb] text-2xl">⌕</span><h2 className="mt-4 text-lg font-semibold">Nothing here yet</h2><p className="mt-2 max-w-sm text-sm leading-6 text-[#6f7771]">Try another difficulty or import a problem to begin building your library.</p></div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] border-collapse text-sm">
+                  <thead className="bg-[#f7f9f6]"><tr className="[&_th]:border-b [&_th]:border-[#e4e8e3] [&_th]:px-5 [&_th]:py-4 [&_th]:text-left [&_th]:text-[10px] [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.12em] [&_th]:text-[#7b867e]"><th className="w-16">#</th><th>Question</th><th>Difficulty</th><th>Topics</th><th className="text-center!">Source</th></tr></thead>
+                  <tbody>
+                    {filtered.map((question) => <tr key={question.id} className="group transition-colors hover:bg-[#f7faf7] [&_td]:border-b [&_td]:border-[#edf0ec] [&_td]:px-5 [&_td]:py-4 last:[&_td]:border-b-0">
+                      <td className="font-mono text-xs font-semibold text-[#98a19b]">{String(question.questionNumber).padStart(2, "0")}</td>
+                      <td><Link className="font-semibold text-[#17221e] no-underline transition group-hover:text-[#176a5a]" href={`/questions/${question.id}`}>{question.title || "Untitled"}<span className="ml-2 opacity-0 transition group-hover:opacity-100" aria-hidden="true">→</span></Link></td>
+                      <td><span className="inline-flex rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: `${difficultyColor[question.difficulty]}18`, color: difficultyColor[question.difficulty] }}>{question.difficulty}</span></td>
+                      <td><div className="flex flex-wrap gap-1.5">{question.topics?.length ? question.topics.slice(0, 3).map((topic) => <span className="whitespace-nowrap rounded-full bg-[#f0f3ef] px-2.5 py-1 text-[11px] font-medium text-[#607066]" key={topic}>{topic}</span>) : <span className="text-[#a1aaa4]">—</span>}{question.topics?.length > 3 && <span className="rounded-full bg-[#e8f1eb] px-2.5 py-1 text-[11px] font-bold text-[#176a5a]">+{question.topics.length - 3}</span>}</div></td>
+                      <td className="text-center"><span className={`inline-grid h-8 min-w-8 place-items-center rounded-lg px-1.5 text-[10px] font-bold ${question.source === "leetcode" ? "bg-[#fff1df] text-[#dd8a13]" : "bg-[#e8f1eb] text-[#176a5a]"}`}>{question.source === "leetcode" ? "LC" : "OA"}</span></td>
+                    </tr>)}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </section>
       </div>
     </main>

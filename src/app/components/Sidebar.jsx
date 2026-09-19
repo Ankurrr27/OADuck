@@ -23,6 +23,12 @@ export default function Sidebar() {
     }
   }, [session]);
 
+  useEffect(() => {
+    const toggleSidebar = () => setSidebarOpen((isOpen) => !isOpen);
+    window.addEventListener("mobileSidebarToggle", toggleSidebar);
+    return () => window.removeEventListener("mobileSidebarToggle", toggleSidebar);
+  }, []);
+
   const profileUrl = session?.user?.username 
     ? `/profile/${session.user.username}` 
     : (session?.user?.email ? `/profile/${session.user.email.split('@')[0]}` : "/profile");
@@ -55,67 +61,68 @@ export default function Sidebar() {
   return (
     <>
       <button
-        className="hidden"
-        type="button"
-        onClick={() => setSidebarOpen(true)}
-        aria-label="Open navigation"
-        title="Open navigation"
-      >
-        <MenuIcon />
-      </button>
-      <button
-        className={`fixed inset-x-0 bottom-0 top-[52px] z-10 border-0 bg-[#17221e]/20 md:hidden ${sidebarOpen ? "block" : "hidden"}`}
+        className={`fixed inset-x-0 bottom-0 top-14 z-10 border-0 bg-[#17221e]/40 backdrop-blur-[1px] transition-opacity duration-300 md:hidden ${sidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
         type="button"
         aria-label="Close navigation"
         onClick={() => setSidebarOpen(false)}
       />
       <aside
-        className={`fixed inset-y-[52px] left-0 z-20 w-[min(264px,78vw)] border-r border-[#dfe1da] bg-[#fffefa] p-3 shadow-xl transition-transform md:relative md:inset-y-auto md:left-auto md:min-h-[calc(100vh-79px)] md:w-[var(--sidebar-width)] md:flex-none md:p-2 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
+        className={`app-sidebar fixed left-0 top-14 z-20 flex h-[calc(100dvh-3.5rem)] w-[min(300px,86vw)] flex-col overflow-y-auto border-r border-[#dfe1da] bg-[#fbfcf9] p-3 shadow-[16px_0_40px_rgba(23,34,30,.18)] transition-transform duration-300 ease-out md:relative md:inset-y-auto md:left-auto md:h-auto md:min-h-[calc(100vh-72px)] md:w-[var(--sidebar-width)] md:flex md:flex-col md:overflow-visible md:p-3 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
         style={{ "--sidebar-width": `${sidebarWidth}px` }}
       >
+        {session?.user?.role === "ADMIN" && (
+          <div className="mb-3 rounded-lg border border-[#dfe8df] bg-[#f4f7f3] p-3 sm:hidden">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[.12em] text-[#7b867e]">Workspace mode</p>
+            <select value={viewRole} onChange={(event) => { const nextRole = event.target.value; setViewRole(nextRole); localStorage.setItem("viewRole", nextRole); window.dispatchEvent(new CustomEvent("viewRoleChange", { detail: nextRole })); setSidebarOpen(false); }} className="min-h-10 w-full rounded-md border border-[#d7dad3] bg-[#fffefa] px-2.5 text-xs font-semibold text-[#123f36] outline-none">
+              <option value="ADMIN">Admin view</option>
+              <option value="USER">User view</option>
+            </select>
+          </div>
+        )}
+        <p className="mb-2 hidden px-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#98a19b] md:block">Workspace</p>
         <nav className="grid gap-1" aria-label="Dashboard tools">
           {session?.user?.role === "ADMIN" && viewRole === "ADMIN" ? (
             <>
-              <Link className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname === "/admin" ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin" title="Admin dashboard" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin" title="Admin dashboard" onClick={() => setSidebarOpen(false)}>
                 <AdminIcon />
                 <span>Dashboard</span>
               </Link>
-              <Link className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname === "/admin/users" ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/users" title="Manage users" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/users" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/users" title="Manage users" onClick={() => setSidebarOpen(false)}>
                 <UsersIcon />
                 <span>Manage Users</span>
               </Link>
-              <Link className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname === "/admin/questions" ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/questions" title="Manage questions" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/questions" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/questions" title="Manage questions" onClick={() => setSidebarOpen(false)}>
                 <LibraryIcon />
                 <span>Manage Questions</span>
               </Link>
-              <Link className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname === "/admin/questions/new" ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/questions/new" title="Add question" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/questions/new" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/questions/new" title="Add question" onClick={() => setSidebarOpen(false)}>
                 <AddIcon />
                 <span>Add Question</span>
               </Link>
-              <Link className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname === "/admin/new-admin" ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/new-admin" title="Add admin" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/new-admin" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/new-admin" title="Add admin" onClick={() => setSidebarOpen(false)}>
                 <AddUserIcon />
                 <span>Add Admin</span>
               </Link>
             </>
           ) : (
             <>
-              <Link className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname.startsWith("/practice") ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/practice" title="Practice questions" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname.startsWith("/practice") ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/practice" title="Practice questions" onClick={() => setSidebarOpen(false)}>
                 <PracticeIcon />
                 <span>Practice</span>
               </Link>
-              <Link className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname === "/questions" ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/questions" title="Question library" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/questions" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/questions" title="Question library" onClick={() => setSidebarOpen(false)}>
                 <LibraryIcon />
                 <span>Library</span>
               </Link>
-              <Link className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname === "/stats" ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/stats" title="View stats" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/stats" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/stats" title="View stats" onClick={() => setSidebarOpen(false)}>
                 <StatsIcon />
                 <span>Stats</span>
               </Link>
-              <Link className={`flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname === "/how-to-use" ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/how-to-use" title="How to use OA Duck" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/how-to-use" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/how-to-use" title="How to use OA Duck" onClick={() => setSidebarOpen(false)}>
                 <HelpIcon />
                 <span>How to use</span>
               </Link>
-              <Link className={`mt-4 flex min-h-10 items-center gap-3 rounded-md px-2.5 text-xs font-semibold text-[#6f7771] hover:bg-[#eef0e9] hover:text-[#123f36] ${pathname.startsWith("/profile") ? "bg-[#eef0e9] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href={profileUrl} title="Edit profile" onClick={() => setSidebarOpen(false)}>
+              <Link className={`mt-3 flex min-h-11 items-center gap-3 rounded-lg border-t border-[#e5e9e4] px-3 pt-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:text-[#123f36] ${pathname.startsWith("/profile") ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href={profileUrl} title="Edit profile" onClick={() => setSidebarOpen(false)}>
                 <ProfileIcon />
                 <span>Profile</span>
               </Link>
@@ -123,7 +130,7 @@ export default function Sidebar() {
           )}
         </nav>
         <button
-          className="mt-7 flex min-h-10 w-full items-center gap-3 rounded-md border-0 bg-transparent px-2.5 text-left text-xs font-semibold text-[#9b6257] hover:bg-[#f8ece9] hover:text-[#9b4032]"
+          className="mt-3 flex min-h-11 w-full items-center gap-3 rounded-lg border border-transparent bg-transparent px-3 text-left text-xs font-semibold text-[#9b6257] transition hover:border-[#efd7d1] hover:bg-[#fff5f2] hover:text-[#9b4032] md:mt-auto"
           type="button"
           onClick={() => signOut({ callbackUrl: "/" })}
           title="Sign out"
@@ -143,10 +150,6 @@ export default function Sidebar() {
       </aside>
     </>
   );
-}
-
-function MenuIcon() {
-  return <svg className="h-5 w-5 shrink-0 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>;
 }
 
 function ProfileIcon() {

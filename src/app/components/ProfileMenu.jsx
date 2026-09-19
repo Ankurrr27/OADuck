@@ -12,11 +12,11 @@ export default function ProfileMenu() {
   const profileUrl = displayUsername ? `/profile/${displayUsername}` : "/profile";
 
   return (
-    <Link className="flex items-center gap-2.5 no-underline" href={profileUrl} aria-label="Open profile">
+    <Link className="flex items-center gap-2 p-1 no-underline transition hover:opacity-80 sm:gap-2.5 sm:pr-2" href={profileUrl} aria-label="Open profile">
       {user.image ? (
         <img className="h-9.5 w-9.5 rounded-full object-cover" src={user.image} alt="" />
       ) : (
-        <span className="grid h-9.5 w-9.5 place-items-center rounded-full bg-[#123f36] font-bold text-[#fffefa]">{name[0].toUpperCase()}</span>
+        <span className="grid h-9.5 w-9.5 place-items-center rounded-full bg-[#176a5a] font-bold text-[#fffefa]">{name[0].toUpperCase()}</span>
       )}
       <span className="hidden min-w-34 grid-cols-1 gap-0.5 sm:grid">
         <strong className="text-xs text-[#f7f5ed]">{name}</strong>

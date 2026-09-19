@@ -34,19 +34,19 @@ export default function AppHeader() {
   }
 
   function openSidebar() {
-    document.querySelector(".mobile-sidebar-toggle")?.click();
+    window.dispatchEvent(new CustomEvent("mobileSidebarToggle"));
   }
 
   return (
-    <header className="flex items-center justify-between border-b border-[#292d2f] bg-[#111416] px-[clamp(14px,6vw,86px)] py-2 sm:py-3">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-[#111416] px-4 sm:px-6 md:h-[72px] md:px-[clamp(24px,6vw,86px)] md:py-0">
       <BrandLogo dark />
       
-      <div className="ml-auto flex items-center gap-4">
+      <div className="ml-auto flex items-center gap-2 sm:gap-3">
         {isAdmin && (
           <select 
             value={viewRole} 
             onChange={handleRoleChange}
-            className="cursor-pointer rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-white outline-none"
+            className="hidden cursor-pointer rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white outline-none transition hover:bg-white/10 sm:block"
           >
             <option value="ADMIN" style={{ color: "#000" }}>Admin View</option>
             <option value="USER" style={{ color: "#000" }}>User View</option>
@@ -55,7 +55,7 @@ export default function AppHeader() {
         <ProfileMenu />
       </div>
 
-      <button className="ml-2 flex h-9 w-9 items-center justify-center border-0 bg-transparent text-[#f7f5ed] md:hidden" type="button" onClick={openSidebar} aria-label="Open navigation">
+      <button className="ml-2 grid h-10 w-10 place-items-center bg-transparent text-[#f7f5ed] transition hover:text-[#f5c75d] active:scale-95 md:hidden" type="button" onClick={openSidebar} aria-label="Open navigation">
         <svg className="h-5 w-5 fill-none stroke-current [stroke-linecap:round] [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
       </button>
     </header>

@@ -7,6 +7,21 @@ import { hash } from "bcryptjs";
 const MAX_IMAGE_SIZE = 7 * 1024 * 1024;
 const IMAGE_PATTERN = /^data:image\/(png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/;
 
+export async function GET() {
+  const session = await auth();
+
+  if (!session?.user?.email) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { name: true, email: true, image: true, username: true, description: true },
+  });
+
+  return Response.json({ user });
+}
+
 export async function PUT(request) {
   const session = await auth();
 
@@ -14,16 +29,19 @@ export async function PUT(request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // hiii
-
   const body = await request.json();
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const image = typeof body.image === "string" ? body.image : null;
   const username = typeof body.username === "string" ? body.username.trim().toLowerCase() : undefined;
   const password = typeof body.password === "string" ? body.password : undefined;
+  const description = typeof body.description === "string" ? body.description.trim() : "";
 
   if (!name || name.length > 100) {
     return Response.json({ error: "Name must be between 1 and 100 characters." }, { status: 400 });
+  }
+
+  if (description.length > 180) {
+    return Response.json({ error: "Bio must be 180 characters or fewer." }, { status: 400 });
   }
 
   if (image) {
@@ -54,7 +72,7 @@ export async function PUT(request) {
     }
   }
 
-  const updateData = { name, image };
+  const updateData = { name, image, description: description || null };
   if (username) updateData.username = username;
   if (password) updateData.passwordHash = await hash(password, 12);
 
@@ -62,7 +80,7 @@ export async function PUT(request) {
     const user = await prisma.user.update({
       where: { email: session.user.email },
       data: updateData,
-      select: { name: true, image: true, username: true },
+      select: { name: true, image: true, username: true, description: true },
     });
 
     return Response.json({ user });

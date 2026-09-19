@@ -23,11 +23,24 @@ export default function EditProfile() {
   useEffect(() => {
     if (!session?.user) return;
 
-    setName(session.user.name || "");
-    setUsername(session.user.username || "");
-    setEmail(session.user.email || "");
-    setImage(session.user.image || "");
-    setImageError(false);
+    async function loadProfile() {
+      try {
+        const response = await fetch("/api/profile");
+        const result = await response.json();
+        if (!response.ok || !result.user) return;
+
+        setName(result.user.name || "");
+        setEmail(result.user.email || "");
+        setUsername(result.user.username || "");
+        setImage(result.user.image || "");
+        setDescription(result.user.description || "");
+        setImageError(false);
+      } catch {
+        // The session data remains a usable fallback if the profile request fails.
+      }
+    }
+
+    loadProfile();
   }, [session]);
 
   function handleImageChange(event) {
@@ -60,7 +73,7 @@ export default function EditProfile() {
     setMessage("");
 
     try {
-      const payload = { name, image, username };
+      const payload = { name, image, username, description };
       if (password) {
         payload.password = password;
       }
@@ -80,6 +93,7 @@ export default function EditProfile() {
       await update({ name: result.user.name, image: result.user.image ?? null, username: result.user.username });
       setImage(result.user.image || "");
       setUsername(result.user.username || "");
+      setDescription(result.user.description || "");
       setPassword("");
       setConfirmPassword("");
       setImageError(false);
@@ -96,58 +110,51 @@ export default function EditProfile() {
       <AppHeader />
       <div className="flex min-h-[calc(100vh-60px)] ">
         <Sidebar />
-        <section className="w-full max-w-[1200px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19">
-        <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">Profile</p>
-        <h1>Edit your profile</h1>
-        {user.username && <p className="-mt-1 mb-1 text-[1.05rem] text-[#6f7771]">@{user.username}</p>}
-        <p className="mt-4 text-sm text-[#6f7771]">Keep your practice identity up to date.</p>
-        <form className="mt-11 grid max-w-[560px] gap-[18px] [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-semibold [&_label]:text-[#505a53] [&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-[#d7dad3] [&_input]:bg-[#fffefa] [&_input]:px-3 [&_textarea]:w-full [&_textarea]:rounded-md [&_textarea]:border [&_textarea]:border-[#d7dad3] [&_textarea]:bg-[#fffefa] [&_textarea]:p-3" onSubmit={handleSubmit}>
-          <div className="mb-2.5 flex items-center gap-4">
-            {image && !imageError ? (
-              <img className="block h-[72px] w-[72px] shrink-0 rounded-full border-3 border-[#dfe8df] object-cover" src={image} alt="Profile preview" onError={() => setImageError(true)} />
-            ) : (
-              <span className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full bg-[#123f36] text-2xl font-bold text-[#f7f5ed]">{(name || "U")[0].toUpperCase()}</span>
-            )}
-            <div>
-              <strong>Profile image</strong>
-              <label className="inline-flex w-fit cursor-pointer rounded-md border border-[#dfe1da] bg-[#fffefa] px-2.5 py-1.5 text-[11px] text-[#123f36]">
-                Change image
-                <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImageChange} />
-              </label>
-              <small>PNG, JPG, or WEBP</small>
-              {image && <button className="w-fit border-0 bg-transparent p-0 text-[10px] font-semibold text-[#a35d51] underline-offset-2 hover:underline" type="button" onClick={() => { setImage(""); setImageError(false); setMessage(""); }}>Remove photo</button>}
+        <section className="w-full max-w-[1280px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-12 md:py-16">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">Your space</p>
+          <div className="page-hero relative overflow-hidden rounded-2xl bg-[#123f36] px-6 py-7 text-[#f7f5ed] shadow-[0_18px_40px_rgba(18,63,54,.16)] sm:px-9 sm:py-8">
+            <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full border-[28px] border-[#f5c75d]/15" aria-hidden="true" />
+            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.14em] text-[#f5c75d]">Profile settings</p>
+                <h1 className="mt-2 text-3xl font-semibold tracking-[-.04em] sm:text-4xl">Make it unmistakably yours.</h1>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-[#d3e0d8]">Your profile travels with your practice — update how you appear to the OA Duck community.</p>
+              </div>
+              <div className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-[#eaf1eb]">@{username || "your-handle"}</div>
             </div>
           </div>
-          <label>
-            Name
-            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" />
-          </label>
-          <label>
-            Username
-            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Your unique username" minLength={3} maxLength={30} />
-            {username && <small className="mt-1.5 block text-[.82rem] text-[#6f7771]">Your profile: <strong>/profile/{username.toLowerCase()}</strong></small>}
-          </label>
-          <label>
-            Email
-            <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="you@example.com" disabled />
-          </label>
-          <label>
-            New Password (leave blank to keep current)
-            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimum 8 characters" minLength={8} />
-          </label>
-          {password && (
-            <label>
-              Confirm New Password
-              <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm your new password" minLength={8} />
-            </label>
-          )}
-          <label>
-            Description
-            <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Tell learners a little about yourself" rows={4} maxLength={180} />
-          </label>
-          <button className="inline-flex min-h-10 items-center justify-center rounded-md border-0 bg-[#123f36] px-4 py-2 text-[13px] font-semibold text-[#f7f5ed] no-underline disabled:cursor-wait disabled:opacity-65" type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save changes"}</button>
-          {message && <p className="m-0 text-xs text-[#568b62]" role="status">{message}</p>}
-        </form>
+
+          <form className="mt-7 grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px]" onSubmit={handleSubmit}>
+            <div className="grid gap-7">
+              <section className="rounded-2xl border border-[#dfe1da] bg-[#fffefa] p-5 shadow-sm sm:p-7">
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <div><h2 className="text-lg font-semibold tracking-[-.025em]">Identity</h2><p className="mt-1 text-sm text-[#6f7771]">The details people see when they visit your profile.</p></div>
+                  {image && !imageError ? <img className="h-16 w-16 shrink-0 rounded-full border-3 border-[#dfe8df] object-cover" src={image} alt="Profile preview" onError={() => setImageError(true)} /> : <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[#123f36] text-xl font-bold text-[#f7f5ed]">{(name || "U")[0].toUpperCase()}</span>}
+                </div>
+                <div className="grid gap-5 [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-semibold [&_label]:text-[#505a53] [&_input]:min-h-11 [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-[#d7dad3] [&_input]:bg-[#fffefa] [&_input]:px-3 [&_input]:text-sm [&_input]:outline-none [&_input]:focus:border-[#176a5a] [&_input]:focus:ring-3 [&_input]:focus:ring-[#176a5a]/10 [&_textarea]:w-full [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-[#d7dad3] [&_textarea]:bg-[#fffefa] [&_textarea]:p-3 [&_textarea]:text-sm [&_textarea]:outline-none [&_textarea]:focus:border-[#176a5a] [&_textarea]:focus:ring-3 [&_textarea]:focus:ring-[#176a5a]/10">
+                  <div className="grid gap-5 sm:grid-cols-2"><label>Name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" /></label><label>Username<input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="your-handle" minLength={3} maxLength={30} /></label></div>
+                  <label>Email<input value={email} type="email" placeholder="you@example.com" disabled className="cursor-not-allowed bg-[#f3f4ef]! text-[#879088]" /></label>
+                  <label>About you<textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Tell learners a little about yourself" rows={4} maxLength={180} /><span className="text-right text-[11px] font-medium text-[#879088]">{description.length}/180</span></label>
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-[#dfe1da] bg-[#fffefa] p-5 shadow-sm sm:p-7">
+                <h2 className="text-lg font-semibold tracking-[-.025em]">Security</h2><p className="mt-1 text-sm text-[#6f7771]">Leave these blank unless you want to set a new password.</p>
+                <div className="mt-6 grid gap-5 sm:grid-cols-2 [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-semibold [&_label]:text-[#505a53] [&_input]:min-h-11 [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-[#d7dad3] [&_input]:bg-[#fffefa] [&_input]:px-3 [&_input]:text-sm [&_input]:outline-none [&_input]:focus:border-[#176a5a] [&_input]:focus:ring-3 [&_input]:focus:ring-[#176a5a]/10"><label>New password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimum 8 characters" minLength={8} /></label>{password && <label>Confirm password<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Repeat new password" minLength={8} /></label>}</div>
+              </section>
+            </div>
+
+            <aside className="h-fit rounded-2xl border border-[#dfe1da] bg-[#fffefa] p-5 shadow-sm sm:p-6">
+              <h2 className="text-lg font-semibold tracking-[-.025em]">Profile photo</h2><p className="mt-1 text-sm leading-6 text-[#6f7771]">Use a clear photo so your teammates can spot you quickly.</p>
+              <label className="mt-5 flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-dashed border-[#8eaa9d] bg-[#eef5f0] px-3 text-xs font-bold text-[#123f36] transition hover:bg-[#e1eee6]">Upload a photo<input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImageChange} /></label>
+              <p className="mt-2 text-center text-[11px] text-[#879088]">PNG, JPG, or WEBP · 5 MB max</p>
+              {image && <button className="mt-4 w-full rounded-lg border border-[#efd7d1] bg-[#fff8f6] px-3 py-2 text-xs font-semibold text-[#9b4032] transition hover:bg-[#fbece8]" type="button" onClick={() => { setImage(""); setImageError(false); setMessage(""); }}>Remove photo</button>}
+              <div className="my-6 border-t border-[#e8ebe5]" />
+              <p className="text-[11px] font-bold uppercase tracking-[.12em] text-[#a07725]">Public link</p><p className="mt-2 break-all rounded-lg bg-[#f4f5f1] px-3 py-2 text-xs text-[#506058]">/profile/{username ? username.toLowerCase() : "your-handle"}</p>
+              <button className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-lg border-0 bg-[#123f36] px-4 py-2 text-sm font-semibold text-[#f7f5ed] transition hover:bg-[#176a5a] disabled:cursor-wait disabled:opacity-65" type="submit" disabled={isSaving}>{isSaving ? "Saving changes…" : "Save changes"}</button>
+              {message && <p className="mt-3 text-center text-xs font-medium text-[#568b62]" role="status">{message}</p>}
+            </aside>
+          </form>
         </section>
       </div>
     </main>

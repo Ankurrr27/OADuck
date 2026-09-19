@@ -11,14 +11,46 @@ body {
   font-family: var(--font-geist-sans), sans-serif;
 }
 
+.page-hero {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* The repeated page-category eyebrow is intentionally removed across workspace screens. */
+main > div > section > p:first-child[class*="uppercase"] {
+  display: none;
+}
+
 .duck-loader { display: grid; justify-items: center; gap: .65rem; color: #5e6e65; }
-.duck-loader__scene { position: relative; width: 112px; height: 144px; }
+.duck-loader__scene { position: relative; width: 96px; height: 124px; }
 .duck-loader__duck { width: 100%; height: 100%; object-fit: contain; }
 .duck-loader__label { font-size: .82rem; font-weight: 650; }
 .duck-loader--compact { transform: scale(.88); }
 .duck-loader--large { gap: 1rem; }
-.duck-loader--large .duck-loader__scene { width: 220px; height: 284px; }
+.duck-loader--large .duck-loader__scene { width: 180px; height: 232px; }
 .duck-loader--large .duck-loader__label { font-size: 1rem; }
+
+.navigation-duck {
+  position: fixed;
+  z-index: 25;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  display: grid;
+  width: 92px;
+  height: 116px;
+  place-items: center;
+  border: 1px solid rgba(214, 225, 217, .9);
+  border-radius: .5rem;
+  background: rgba(255, 254, 250, .94);
+  box-shadow: 0 12px 30px rgba(23, 34, 30, .15);
+  animation: navigation-duck-in .16s ease-out;
+  pointer-events: none;
+}
+
+@keyframes navigation-duck-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .solve-shell {
   display: flex;
@@ -98,6 +130,152 @@ body {
 }
 
 @media (max-width: 720px) {
+  body { font-size: 14px; }
+
+  /* Keep loading states visual and minimal on phones. */
+  .duck-loader__label { display: none; }
+  .duck-loader { gap: 0; }
+
+  .navigation-duck {
+    inset: 0;
+    z-index: 25;
+    width: auto;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    background: rgba(245, 244, 239, .55);
+    box-shadow: none;
+  }
+
+  main > div > section {
+    padding-top: 0 !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  main > div > section h1 {
+    font-size: clamp(1.7rem, 8vw, 2.15rem) !important;
+    line-height: 1.08 !important;
+  }
+
+  main > div > section h2 {
+    font-size: 1.1rem !important;
+  }
+
+  main > div > section p {
+    line-height: 1.45;
+  }
+
+  /* Mobile is intentionally flatter and edge-to-edge: desktop cards become content sections. */
+  main > div > section {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  main > div > section > :not(.solve-shell) {
+    margin-right: 0;
+    margin-left: 0;
+    border-right-width: 0;
+    border-left-width: 0;
+    border-radius: 0;
+  }
+
+  main > div > section > .rounded-2xl,
+  main > div > section > .rounded-xl {
+    padding: 1rem !important;
+  }
+
+  main > div > section > .rounded-2xl,
+  main > div > section > .rounded-xl {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  main > div > section .rounded-2xl {
+    border-radius: .2rem;
+  }
+
+  main > div > section .rounded-xl {
+    border-radius: .2rem;
+  }
+
+  main > div > section .rounded-lg {
+    border-radius: .2rem;
+  }
+
+  main > div > section .shadow-sm,
+  main > div > section .shadow-md {
+    box-shadow: none;
+  }
+
+  /* Profile settings use a continuous mobile form, not nested desktop cards. */
+  main > div > section form > div > section,
+  main > div > section form > aside {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding-right: 1.5rem !important;
+    padding-left: 1.5rem !important;
+  }
+
+  main > div > section form > div > section + section,
+  main > div > section form > aside {
+    border-top: 1px solid #e1e6e1 !important;
+    padding-top: 1.25rem !important;
+  }
+
+  main > div > section [class*="p-6"],
+  main > div > section [class*="p-7"],
+  main > div > section [class*="p-8"],
+  main > div > section [class*="p-9"] {
+    padding: 1rem !important;
+  }
+
+  main > div > section [class*="py-8"],
+  main > div > section [class*="py-9"],
+  main > div > section [class*="py-10"],
+  main > div > section [class*="py-12"] {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+
+  main > div > section [class*="gap-6"],
+  main > div > section [class*="gap-7"],
+  main > div > section [class*="gap-8"],
+  main > div > section [class*="gap-9"] {
+    gap: .75rem !important;
+  }
+
+  main > div > section [class*="mt-7"],
+  main > div > section [class*="mt-8"],
+  main > div > section [class*="mt-9"] {
+    margin-top: 1rem !important;
+  }
+
+  main > div > section button,
+  main > div > section a[class*="min-h-"] {
+    min-height: 2.5rem;
+  }
+
+  main > div > section table th,
+  main > div > section table td {
+    padding-top: .7rem !important;
+    padding-bottom: .7rem !important;
+  }
+
+  .app-sidebar nav a {
+    border-radius: 0 !important;
+    background-color: transparent !important;
+  }
+
+  .app-sidebar nav a:hover {
+    background-color: #f1f5f1 !important;
+  }
+
+  .app-sidebar > button {
+    border-radius: 0 !important;
+  }
+
   .solve-shell { height: calc(100dvh - 60px); overflow: hidden; }
   .solve-workspace { display: flex; height: 100%; min-height: 0; flex-direction: column; overflow: hidden; }
   .problem-panel { height: auto; min-height: 0; flex: 1 1 48%; overflow-y: scroll; border-right: 0; border-bottom: 1px solid #dbe2dd; }

@@ -1,45 +1,28 @@
 import Link from "next/link";
-import BrandLogo from "./components/BrandLogo";
+import AppHeader from "./components/AppHeader";
+import Sidebar from "./components/Sidebar";
+import DuckLoader from "./components/DuckLoader";
 
 export default function NotFound() {
   return (
-    <div style={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      minHeight: "100vh",
-      background: "var(--bg)",
-      color: "var(--ink)",
-      fontFamily: "var(--font-sans)",
-      padding: "2rem",
-      textAlign: "center"
-    }}>
-      <div style={{ marginBottom: "2rem" }}>
-        <BrandLogo />
+    <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
+      <AppHeader />
+      <div className="flex min-h-[calc(100vh-72px)]">
+        <Sidebar />
+        <section className="flex w-full flex-1 items-center justify-center px-6 py-12">
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-[#dfe1da] bg-[#fffefa] px-6 py-12 text-center shadow-sm sm:px-12 sm:py-16">
+            <div className="absolute left-1/2 top-0 h-44 w-44 -translate-x-1/2 rounded-full bg-[#e8f1eb] blur-3xl" aria-hidden="true" />
+            <div className="relative mx-auto w-fit rounded-2xl bg-[#f6f8f4] px-5 py-3"><DuckLoader label="" /></div>
+            <p className="relative mt-7 text-xs font-bold uppercase tracking-[.14em] text-[#a07725]">404 · Lost in the reeds</p>
+            <h1 className="relative mt-3 text-3xl font-semibold tracking-[-.045em] sm:text-4xl">This page flew away.</h1>
+            <p className="relative mx-auto mt-4 max-w-md text-sm leading-6 text-[#6f7771]">The duck you were looking for may have migrated, changed its name, or is temporarily unavailable.</p>
+            <div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#123f36] px-5 py-2 text-sm font-semibold text-[#f7f5ed] no-underline transition hover:bg-[#176a5a]" href="/practice">Start practicing</Link>
+              <Link className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[#d5dfd8] bg-[#fffefa] px-5 py-2 text-sm font-semibold text-[#176a5a] no-underline transition hover:bg-[#f4f7f3]" href="/questions">Browse questions</Link>
+            </div>
+          </div>
+        </section>
       </div>
-      
-      <div style={{ fontSize: "5rem", marginBottom: "1rem" }}>🦆</div>
-      
-      <h1 style={{ fontSize: "3rem", fontWeight: 800, marginBottom: "1rem", letterSpacing: "-0.03em" }}>
-        404
-      </h1>
-      
-      <h2 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: "1rem" }}>
-        This page flew away
-      </h2>
-      
-      <p style={{ color: "var(--muted)", maxWidth: "400px", marginBottom: "2rem", lineHeight: 1.6 }}>
-        The duck you are looking for might have migrated, had its name changed, or is temporarily unavailable.
-      </p>
-      
-      <Link 
-        href="/" 
-        className="inline-flex min-h-10 items-center justify-center rounded-md border-0 bg-[#123f36] px-4 py-2 text-[13px] font-semibold text-[#f7f5ed] no-underline disabled:cursor-wait disabled:opacity-65" 
-        style={{ textDecoration: "none", display: "inline-flex", padding: "0.8rem 1.5rem" }}
-      >
-        Return to Pond
-      </Link>
-    </div>
+    </main>
   );
 }
