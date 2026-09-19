@@ -1,0 +1,77 @@
+# Authentication and Profile Enhancements
+
+This plan covers the implementation of a more robust authentication system supporting both Google OAuth and manual email/password login, alongside a user profile system with unique usernames and avatar updates.
+
+## User Review Required
+
+- **Avatar Upload Storage**: Storing avatars as Base64 strings in PostgreSQL can bloat the database if images are large. I will implement a client-side resizing/compression to keep it manageable, but for production, a cloud storage solution like AWS S3 or Vercel Blob is recommended. Are you okay with storing base64 strings in the database for now?
+- **Public Profile Route**: I propose using `/[username]` for the public profile domain. Is this acceptable, or would you prefer a prefix like `/profile/[username]`?
+
+## Open Questions
+
+- What should happen if a user who registered manually tries to login with Google? Usually, NextAuth links them by email automatically. Is this the desired behavior?
+- When prompting Google users to set a password, should it be a blocking modal that they *must* fill out, or a dismissible banner/modal they can skip? The plan currently assumes a dismissible modal that pops up on every login until they set it.
+
+## Proposed Changes
+
+---
+
+### Database Schema (Prisma)
+
+#### [MODIFY] [schema.prisma](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/prisma/schema.prisma)
+- Add `password String?` to the `User` model.
+- The `User` model already has `username String? @unique` and `image String?`. These are perfect for our needs.
+
+---
+
+### Backend API & Authentication
+
+#### [MODIFY] [package.json](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/package.json)
+- Add `bcryptjs` and `@types/bcryptjs` for password hashing.
+
+#### [MODIFY] [auth.js](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/src/auth.js)
+- Add NextAuth `Credentials` provider.
+- In `signIn` callback for Google: generate a random, unique `username` (e.g. `user_12345`) if creating a new user.
+- In `jwt` callback: query the user to check if they have a password set (`hasPassword: !!user.password`) and append `hasPassword`, `username`, and `image` to the token.
+- In `session` callback: pass these values to the client session.
+
+#### [NEW] [route.js](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/src/app/api/auth/register/route.js)
+- Create `POST /api/auth/register` to handle manual sign-ups (hashing passwords, generating random usernames if not provided).
+
+#### [NEW] [route.js](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/src/app/api/user/profile/route.js)
+- Create `PUT /api/user/profile` to update user's `username`, `image`, `name`, and `password`.
+
+---
+
+### Frontend Components
+
+#### [MODIFY] [AuthForm.js](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/src/app/components/AuthForm.js)
+- Connect manual registration form to `/api/auth/register`.
+- Connect manual login form to `signIn("credentials", { ... })`.
+
+#### [NEW] [SetPasswordModal.js](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/src/app/components/SetPasswordModal.js)
+- A modal component that checks `session.user.hasPassword`. If false (meaning they logged in via Google and haven't set a password), it will display a prompt asking them to set one.
+
+#### [MODIFY] [layout.js](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/src/app/layout.js)
+- Include `SetPasswordModal` in the root layout so it can appear across the application when needed.
+
+#### [MODIFY] [page.js](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/src/app/profile/page.js)
+- Update profile edit page to fetch current user data from session.
+- Convert image to base64 upon selection and send it to `/api/user/profile`.
+- Send username changes to `/api/user/profile` and handle unique constraints (e.g. "Username already taken").
+- Add a "Set Password" or "Change Password" section.
+
+#### [NEW] [page.js](file:///c:/Users/ankur/Documents/9.MainProjects/22.DuckOA/OADuck/src/app/[username]/page.js)
+- Create a public profile page accessible via `domain.com/[username]` that displays the user's avatar, name, and username.
+
+## Verification Plan
+
+### Automated Tests
+- N/A - no automated test suite is currently configured.
+
+### Manual Verification
+1. **Manual Registration**: Register a new user manually. Verify the password is saved, they can login, and they are assigned a random username.
+2. **Google Login**: Login via Google. Verify a random username is assigned and the "Set Password" modal appears.
+3. **Set Password**: Set a password via the modal. Verify the modal goes away and doesn't appear on subsequent logins.
+4. **Profile Update**: Go to `/profile`, change the username and avatar. Verify the changes persist and update across the app.
+5. **Unique Domain**: Navigate to `/[username]` and verify the public profile page renders correctly with the new username and avatar.
