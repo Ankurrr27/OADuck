@@ -3,11 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 export default function Sidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const profileUrl = session?.user?.username 
+    ? `/profile/${session.user.username}` 
+    : (session?.user?.email ? `/profile/${session.user.email.split('@')[0]}` : "/profile");
 
   return (
     <>
@@ -37,7 +41,7 @@ export default function Sidebar() {
           <MenuIcon />
         </button>
         <nav className="sidebar-nav" aria-label="Dashboard tools">
-          <Link className={`sidebar-tool ${pathname === "/profile" ? "active" : ""}`} href="/profile" title="Edit profile" onClick={() => setSidebarOpen(false)}>
+          <Link className={`sidebar-tool ${pathname.startsWith("/profile") ? "active" : ""}`} href={profileUrl} title="Edit profile" onClick={() => setSidebarOpen(false)}>
             <ProfileIcon />
             <span>Profile</span>
           </Link>
@@ -57,6 +61,15 @@ export default function Sidebar() {
             <HelpIcon />
             <span>How to use</span>
           </Link>
+          {session?.user?.role === "ADMIN" && (
+            <>
+              <div className="sidebar-divider" />
+              <Link className={`sidebar-tool ${pathname.startsWith("/admin") ? "active" : ""}`} href="/admin" title="Admin dashboard" onClick={() => setSidebarOpen(false)}>
+                <AdminIcon />
+                <span>Admin</span>
+              </Link>
+            </>
+          )}
         </nav>
         <button
           className="sidebar-tool sidebar-logout"
@@ -98,4 +111,8 @@ function HelpIcon() {
 
 function LogoutIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" /></svg>;
+}
+
+function AdminIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" /><path d="M9 12l2 2 4-4" /></svg>;
 }

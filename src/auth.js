@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import authConfig from "../auth.config";
 import { compare } from "bcryptjs";
 import prisma from "./lib/prisma";
-
+import crypto from "crypto";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   providers: [
@@ -64,6 +64,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         create: {
           email: user.email,
           name: user.name,
+          username: "user_" + crypto.randomUUID().slice(0, 8),
           image: user.image,
           role: isAdmin ? "ADMIN" : "USER",
         },
@@ -75,10 +76,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.email) {
         const databaseUser = await prisma.user.findUnique({
           where: { email: token.email },
-          select: { role: true },
+          select: { role: true, username: true, passwordHash: true },
         });
 
         token.role = databaseUser?.role;
+        token.username = databaseUser?.username;
+        token.needsPasswordSetup = !databaseUser?.passwordHash;
       }
 
       delete token.name;
@@ -104,9 +107,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (Object.prototype.hasOwnProperty.call(newSession, "image")) {
           session.user.image = newSession.image;
         }
+        if (Object.prototype.hasOwnProperty.call(newSession, "needsPasswordSetup")) {
+          session.user.needsPasswordSetup = newSession.needsPasswordSetup;
+          token.needsPasswordSetup = newSession.needsPasswordSetup; // important to update token too if jwt strategy
+        }
+        if (Object.prototype.hasOwnProperty.call(newSession, "username")) {
+          session.user.username = newSession.username;
+          token.username = newSession.username;
+        }
       }
 
       session.user.role = token.role;
+      session.user.username = token.username;
+      session.user.needsPasswordSetup = token.needsPasswordSetup;
       return session;
     },
   },

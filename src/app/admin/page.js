@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import AppHeader from "../components/AppHeader";
 import Sidebar from "../components/Sidebar";
 import { auth } from "../../auth";
@@ -37,9 +38,12 @@ export default async function AdminPage() {
               <h1>Admin dashboard</h1>
               <p className="inner-page-lede">A quick view of the OA Duck workspace.</p>
             </div>
-            <div className="admin-identity">
-              <span>Signed in as</span>
-              <strong>{session.user.email}</strong>
+            <div className="admin-identity" style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+              <div>
+                <span>Signed in as</span>
+                <strong>{session.user.email}</strong>
+              </div>
+              <Link href="/admin/questions/new" className="inner-page-button" style={{ textDecoration: "none", margin: 0 }}>+ Add Question</Link>
             </div>
           </div>
           <div className="admin-stat-grid">
