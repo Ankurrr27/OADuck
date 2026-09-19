@@ -6,11 +6,14 @@ import { useSession } from "next-auth/react";
 import Sidebar from "../components/Sidebar";
 import AppHeader from "../components/AppHeader";
 
-export default function ProfilePage() {
+export default function EditProfile() {
   const { data: session, update } = useSession();
   const user = session?.user || {};
   const [name, setName] = useState(user.name || "");
   const [email, setEmail] = useState(user.email || "");
+  const [username, setUsername] = useState(user.username || "");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [image, setImage] = useState(user.image || "");
   const [description, setDescription] = useState("");
   const [imageError, setImageError] = useState(false);
@@ -21,6 +24,7 @@ export default function ProfilePage() {
     if (!session?.user) return;
 
     setName(session.user.name || "");
+    setUsername(session.user.username || "");
     setEmail(session.user.email || "");
     setImage(session.user.image || "");
     setImageError(false);
@@ -46,14 +50,25 @@ export default function ProfilePage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (password && password !== confirmPassword) {
+      setMessage("Passwords do not match.");
+      return;
+    }
+
     setIsSaving(true);
     setMessage("");
 
     try {
+      const payload = { name, image, username };
+      if (password) {
+        payload.password = password;
+      }
+
       const response = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, image }),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
@@ -62,8 +77,11 @@ export default function ProfilePage() {
         return;
       }
 
-      await update({ name: result.user.name, image: result.user.image ?? null });
+      await update({ name: result.user.name, image: result.user.image ?? null, username: result.user.username });
       setImage(result.user.image || "");
+      setUsername(result.user.username || "");
+      setPassword("");
+      setConfirmPassword("");
       setImageError(false);
       setMessage("Profile updated.");
     } catch {
@@ -81,6 +99,7 @@ export default function ProfilePage() {
         <section className="inner-page-content profile-page-content">
         <p className="eyebrow">Profile</p>
         <h1>Edit your profile</h1>
+        {user.username && <p className="profile-username-display">@{user.username}</p>}
         <p className="inner-page-lede">Keep your practice identity up to date.</p>
         <form className="profile-form" onSubmit={handleSubmit}>
           <div className="profile-image-editor">
@@ -104,9 +123,24 @@ export default function ProfilePage() {
             <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" />
           </label>
           <label>
-            Email
-            <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="you@example.com" />
+            Username
+            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Your unique username" minLength={3} maxLength={30} />
+            {username && <small className="profile-url-hint">Your profile: <strong>/profile/{username.toLowerCase()}</strong></small>}
           </label>
+          <label>
+            Email
+            <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="you@example.com" disabled />
+          </label>
+          <label>
+            New Password (leave blank to keep current)
+            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimum 8 characters" minLength={8} />
+          </label>
+          {password && (
+            <label>
+              Confirm New Password
+              <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm your new password" minLength={8} />
+            </label>
+          )}
           <label>
             Description
             <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Tell learners a little about yourself" rows={4} maxLength={180} />

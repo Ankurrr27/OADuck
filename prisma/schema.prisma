@@ -29,8 +29,18 @@ model User {
 
 model Question {
   id               String            @id @default(uuid()) @db.Uuid
-  questionNumber   Int               @map("question_number")
+  questionNumber   Int               @default(autoincrement()) @map("question_number")
+  title            String?
+  description      String?           @db.Text
   difficulty       String
+  topics           String[]
+  examples         Json?
+  constraints      Json?
+  source           String?           @default("leetcode")
+  sourceUrl        String?
+  leetcodeSlug     String?
+  leetcodeId       String?
+
   createdById      String            @map("created_by") @db.Uuid
   createdBy        User              @relation(fields: [createdById], references: [id])
   hints            Hint[]
