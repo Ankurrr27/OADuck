@@ -8,5 +8,5 @@ export default function LogoutPage() {
     signOut({ callbackUrl: "/" });
   }, []);
 
-  return <main className="auth-panel"><p className="inner-page-lede">Signing you out...</p></main>;
+  return <main className="auth-panel"><p className="mt-4 text-sm text-[#6f7771]">Signing you out...</p></main>;
 }

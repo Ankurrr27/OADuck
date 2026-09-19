@@ -35,7 +35,7 @@ export default function NotFound() {
       
       <Link 
         href="/" 
-        className="inner-page-button" 
+        className="inline-flex min-h-10 items-center justify-center rounded-md border-0 bg-[#123f36] px-4 py-2 text-[13px] font-semibold text-[#f7f5ed] no-underline disabled:cursor-wait disabled:opacity-65" 
         style={{ textDecoration: "none", display: "inline-flex", padding: "0.8rem 1.5rem" }}
       >
         Return to Pond

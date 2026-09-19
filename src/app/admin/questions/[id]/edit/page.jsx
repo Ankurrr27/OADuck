@@ -183,13 +183,13 @@ export default function EditQuestionPage() {
 
   if (pageLoading) {
     return (
-      <main className="inner-page-shell">
+      <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
         <AppHeader />
-        <div className="dashboard-layout inner-page-layout">
+        <div className="flex min-h-[calc(100vh-60px)] ">
           <Sidebar />
-          <section className="inner-page-content admin-page-content" style={{ maxWidth: "800px" }}>
-            <div className="q-loading">
-              <div className="q-loading-spinner" />
+          <section className="w-full max-w-[900px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19 max-w-[1120px]" style={{ maxWidth: "800px" }}>
+            <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]">
+              <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]-spinner" />
               <span>Loading question...</span>
             </div>
           </section>
@@ -200,15 +200,15 @@ export default function EditQuestionPage() {
 
   if (loadError) {
     return (
-      <main className="inner-page-shell">
+      <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
         <AppHeader />
-        <div className="dashboard-layout inner-page-layout">
+        <div className="flex min-h-[calc(100vh-60px)] ">
           <Sidebar />
-          <section className="inner-page-content admin-page-content" style={{ maxWidth: "800px" }}>
-            <p className="eyebrow">
+          <section className="w-full max-w-[900px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19 max-w-[1120px]" style={{ maxWidth: "800px" }}>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">
               <Link href="/questions" style={{ textDecoration: "none", color: "inherit" }}>&larr; Back to Library</Link>
             </p>
-            <div className="q-empty">
+            <div className="flex flex-col items-center gap-2 py-16 text-center">
               <p>{loadError}</p>
             </div>
           </section>
@@ -218,29 +218,29 @@ export default function EditQuestionPage() {
   }
 
   return (
-    <main className="inner-page-shell">
+    <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
       <AppHeader />
-      <div className="dashboard-layout inner-page-layout">
+      <div className="flex min-h-[calc(100vh-60px)] ">
         <Sidebar />
-        <section className="inner-page-content admin-page-content" style={{ maxWidth: "800px" }}>
-          <p className="eyebrow">
+        <section className="w-full max-w-[900px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19 max-w-[1120px]" style={{ maxWidth: "800px" }}>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">
             <Link href="/questions" style={{ textDecoration: "none", color: "inherit" }}>&larr; Back to Library</Link>
           </p>
 
           <div style={{ marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
               <h1>Edit question #{questionNumber}</h1>
-              <p className="inner-page-lede">Update the problem details or re-import from LeetCode.</p>
+              <p className="mt-4 text-sm text-[#6f7771]">Update the problem details or re-import from LeetCode.</p>
             </div>
           </div>
 
           {/* Re-import section */}
-          <div className="admin-stat-card" style={{ padding: "1.5rem", marginBottom: "3rem", display: "block" }}>
+          <div className="grid min-h-36 content-between rounded-lg border border-[#dfe1da] bg-[#fffefa] p-4.5 [&_span]:text-[11px] [&_span]:text-[#6f7771] [&_small]:text-[11px] [&_small]:text-[#6f7771] [&_strong]:text-[38px] [&_strong]:font-medium [&_strong]:tracking-[-.06em] [&_strong]:text-[#123f36]" style={{ padding: "1.5rem", marginBottom: "3rem", display: "block" }}>
             <h2 style={{ fontSize: "1.2rem", marginBottom: "1rem" }}>Re-import from LeetCode</h2>
             <form onSubmit={handleImport} style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
                 <input
-                  className="auth-input"
+                  className="min-h-10 w-full rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 text-[13px] outline-none focus:border-[#7c9b8d] focus:ring-3 focus:ring-[#123f36]/10"
                   style={{ margin: 0 }}
                   value={importUrl}
                   onChange={(e) => setImportUrl(e.target.value)}
@@ -248,7 +248,7 @@ export default function EditQuestionPage() {
                 />
               </div>
               <button
-                className="inner-page-button"
+                className="inline-flex min-h-10 items-center justify-center rounded-md border-0 bg-[#123f36] px-4 py-2 text-[13px] font-semibold text-[#f7f5ed] no-underline disabled:cursor-wait disabled:opacity-65"
                 type="submit"
                 disabled={isImporting}
                 style={{ marginTop: 0 }}
@@ -258,15 +258,15 @@ export default function EditQuestionPage() {
             </form>
 
             {importError && (
-              <p className="auth-message" style={{ marginTop: "1rem", color: "#d32f2f" }}>{importError}</p>
+              <p className="text-sm text-[#6f7771]" style={{ marginTop: "1rem", color: "#d32f2f" }}>{importError}</p>
             )}
 
             {importSuccess && (
-              <p className="auth-message" style={{ marginTop: "1rem", color: "var(--green)" }}>Problem re-imported. Review and save below.</p>
+              <p className="text-sm text-[#6f7771]" style={{ marginTop: "1rem", color: "var(--green)" }}>Problem re-imported. Review and save below.</p>
             )}
           </div>
 
-          <form className="profile-form" onSubmit={handleSave}>
+          <form className="mt-11 grid max-w-[560px] gap-[18px] [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-semibold [&_label]:text-[#505a53] [&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-[#d7dad3] [&_input]:bg-[#fffefa] [&_input]:px-3 [&_textarea]:w-full [&_textarea]:rounded-md [&_textarea]:border [&_textarea]:border-[#d7dad3] [&_textarea]:bg-[#fffefa] [&_textarea]:p-3" onSubmit={handleSave}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <label>
                 Title
@@ -276,7 +276,7 @@ export default function EditQuestionPage() {
               <label>
                 Difficulty
                 <select
-                  className="auth-input"
+                  className="min-h-10 w-full rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 text-[13px] outline-none focus:border-[#7c9b8d] focus:ring-3 focus:ring-[#123f36]/10"
                   style={{ margin: "6px 0 0" }}
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
@@ -338,7 +338,7 @@ export default function EditQuestionPage() {
 
             <div style={{ marginTop: "2rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
               <button
-                className="inner-page-button"
+                className="inline-flex min-h-10 items-center justify-center rounded-md border-0 bg-[#123f36] px-4 py-2 text-[13px] font-semibold text-[#f7f5ed] no-underline disabled:cursor-wait disabled:opacity-65"
                 type="submit"
                 disabled={isSaving}
               >
@@ -346,11 +346,11 @@ export default function EditQuestionPage() {
               </button>
 
               {saveSuccess && (
-                <p className="auth-message" style={{ margin: 0, color: "var(--green)" }}>Changes saved!</p>
+                <p className="text-sm text-[#6f7771]" style={{ margin: 0, color: "var(--green)" }}>Changes saved!</p>
               )}
 
               {saveError && (
-                <p className="auth-message" style={{ margin: 0, color: "#d32f2f" }}>{saveError}</p>
+                <p className="text-sm text-[#6f7771]" style={{ margin: 0, color: "#d32f2f" }}>{saveError}</p>
               )}
             </div>
           </form>

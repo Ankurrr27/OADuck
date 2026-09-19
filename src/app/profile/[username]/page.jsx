@@ -37,12 +37,12 @@ export default function PublicProfilePage() {
 
   if (status === "loading" || loading) {
     return (
-      <main className="inner-page-shell">
+      <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
         <AppHeader />
-        <div className="dashboard-layout inner-page-layout">
+        <div className="flex min-h-[calc(100vh-60px)] ">
           <Sidebar />
-          <section className="inner-page-content profile-page-content">
-            <p className="eyebrow">Profile</p>
+          <section className="w-full max-w-[1200px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">Profile</p>
             <h1>Loading...</h1>
           </section>
         </div>
@@ -59,15 +59,15 @@ export default function PublicProfilePage() {
 
   if (error || !user) {
     return (
-      <main className="inner-page-shell">
+      <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
         <AppHeader />
-        <div className="dashboard-layout inner-page-layout">
+        <div className="flex min-h-[calc(100vh-60px)] ">
           <Sidebar />
-          <section className="inner-page-content profile-page-content">
-            <p className="eyebrow">Profile</p>
+          <section className="w-full max-w-[1200px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">Profile</p>
             <h1>User not found</h1>
-            <p className="inner-page-lede">{error || "This user doesn't exist."}</p>
-            <Link href="/" className="inner-page-button" style={{ display: "inline-block", marginTop: "1.5rem", textDecoration: "none" }}>Go home</Link>
+            <p className="mt-4 text-sm text-[#6f7771]">{error || "This user doesn't exist."}</p>
+            <Link href="/" className="inline-flex min-h-10 items-center justify-center rounded-md border-0 bg-[#123f36] px-4 py-2 text-[13px] font-semibold text-[#f7f5ed] no-underline disabled:cursor-wait disabled:opacity-65" style={{ display: "inline-block", marginTop: "1.5rem", textDecoration: "none" }}>Go home</Link>
           </section>
         </div>
       </main>
@@ -75,30 +75,30 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <main className="inner-page-shell">
+    <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
       <AppHeader />
-      <div className="dashboard-layout inner-page-layout">
+      <div className="flex min-h-[calc(100vh-60px)] ">
         <Sidebar />
-        <section className="inner-page-content profile-page-content">
-          <p className="eyebrow">Profile</p>
-          <div className="public-profile-card">
-            <div className="public-profile-header">
+        <section className="w-full max-w-[1200px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">Profile</p>
+          <div className="mt-6">
+            <div className="flex items-center gap-6">
               {user.image && !imageError ? (
                 <img
-                  className="public-profile-avatar"
+                  className="h-24 w-24 rounded-full border-3 border-[#dfe1da] object-cover"
                   src={user.image}
                   alt={user.name || user.username}
                   onError={() => setImageError(true)}
                 />
               ) : (
-                <span className="public-profile-avatar-fallback">
+                <span className="h-24 w-24 rounded-full border-3 border-[#dfe1da] object-cover-fallback">
                   {(user.name || user.username || "U")[0].toUpperCase()}
                 </span>
               )}
               <div>
-                <h1 className="public-profile-name">{user.name || user.username}</h1>
-                <p className="public-profile-username">@{user.username}</p>
-                {user.role === "ADMIN" && <span className="public-profile-badge">Admin</span>}
+                <h1 className="m-0 text-[1.6rem] font-bold leading-tight">{user.name || user.username}</h1>
+                <p className="mt-1 text-base text-[#6f7771]">@{user.username}</p>
+                {user.role === "ADMIN" && <span className="mt-1.5 inline-block rounded-full bg-[#f5c75d] px-2.5 py-0.5 text-xs font-semibold tracking-[.03em] text-[#17221e]">Admin</span>}
               </div>
             </div>
           </div>

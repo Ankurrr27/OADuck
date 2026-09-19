@@ -39,7 +39,7 @@ export default function Error({ error, reset }) {
       <div style={{ display: "flex", gap: "1rem" }}>
         <button 
           onClick={() => reset()} 
-          className="inner-page-button" 
+          className="inline-flex min-h-10 items-center justify-center rounded-md border-0 bg-[#123f36] px-4 py-2 text-[13px] font-semibold text-[#f7f5ed] no-underline disabled:cursor-wait disabled:opacity-65" 
           style={{ padding: "0.8rem 1.5rem", border: "none", cursor: "pointer", fontSize: "1rem" }}
         >
           Try again
