@@ -72,7 +72,7 @@ export default function AuthForm({ initialMode = "login" }) {
       <section className="welcome-panel">
         <BrandLogo dark />
         <div className="welcome-copy">
-          <p className="eyebrow">A calmer way to practice</p>
+          
           <h1>Build better answers, one question at a time.</h1>
           <p className="welcome-description">A focused workspace for questions, hints, and progress.</p>
         </div>
@@ -81,14 +81,11 @@ export default function AuthForm({ initialMode = "login" }) {
         <div className="auth-card">
           <div className="mobile-brand"><BrandLogo /></div>
           <div className="auth-heading">
-            <p className="eyebrow">Welcome to OA Duck</p>
+           
             <h2>{isRegistering ? "Start your practice" : "Welcome back"}</h2>
             <p>{isRegistering ? "Create an account and make your next session count." : "Pick up where your practice left off."}</p>
           </div>
-          <div className="mode-switch" role="tablist" aria-label="Authentication mode">
-            <Link className={isRegistering ? "active" : ""} href="/register" role="tab" aria-selected={isRegistering}>Register</Link>
-            <Link className={!isRegistering ? "active" : ""} href="/login" role="tab" aria-selected={!isRegistering}>Login</Link>
-          </div>
+          
           <button className="google-button" type="button" onClick={handleGoogle}><span className="google-icon" aria-hidden="true">G</span>{isRegistering ? "Sign up with Google" : "Continue with Google"}</button>
           <div className="divider"><span>or continue with email</span></div>
           <form onSubmit={handleSubmit}>
@@ -100,7 +97,13 @@ export default function AuthForm({ initialMode = "login" }) {
             <button className="submit-button" type="submit" disabled={isSubmitting}>{isSubmitting ? "Working..." : isRegistering ? "Create account" : "Log in"}<span aria-hidden="true">&#8594;</span></button>
           </form>
           {message && <p className="form-message" role="status">{message}</p>}
-          <p className="terms-copy">By continuing, you agree to our <button type="button" className="text-button">Terms</button> and <button type="button" className="text-button">Privacy Policy</button>.</p>
+          <p className="auth-switch">
+            {isRegistering ? "Already have an account?" : "Don't have an account?"}{" "}
+            <Link href={isRegistering ? "/login" : "/register"}>
+              {isRegistering ? "Log in" : "Register"}
+            </Link>
+          </p>
+        
         </div>
       </section>
     </main>

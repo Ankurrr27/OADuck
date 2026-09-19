@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import Sidebar from "../components/Sidebar";
 import AppHeader from "../components/AppHeader";
 
@@ -15,6 +16,7 @@ export default function QuestionsPage() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
+  const { data: session } = useSession();
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -95,11 +97,7 @@ export default function QuestionsPage() {
                     <tr key={q.id} className="q-row">
                       <td className="q-cell-num">{q.questionNumber}</td>
                       <td className="q-cell-title">
-                        {q.sourceUrl ? (
-                          <a href={q.sourceUrl} target="_blank" rel="noopener noreferrer">{q.title || "Untitled"}</a>
-                        ) : (
-                          <Link href={`/questions/${q.id}`}>{q.title || "Untitled"}</Link>
-                        )}
+                        <Link href={`/questions/${q.id}`}>{q.title || "Untitled"}</Link>
                       </td>
                       <td>
                         <span className="q-diff-badge" style={{ background: `${difficultyColor[q.difficulty]}18`, color: difficultyColor[q.difficulty] }}>

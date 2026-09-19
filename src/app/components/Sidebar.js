@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -9,6 +9,19 @@ export default function Sidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [viewRole, setViewRole] = useState("ADMIN");
+
+  useEffect(() => {
+    if (session?.user?.role === "ADMIN") {
+      const stored = localStorage.getItem("viewRole");
+      if (stored) setViewRole(stored);
+
+      const handleRoleChange = (e) => setViewRole(e.detail);
+      window.addEventListener("viewRoleChange", handleRoleChange);
+      return () => window.removeEventListener("viewRoleChange", handleRoleChange);
+    }
+  }, [session]);
+
   const profileUrl = session?.user?.username 
     ? `/profile/${session.user.username}` 
     : (session?.user?.email ? `/profile/${session.user.email.split('@')[0]}` : "/profile");
@@ -41,32 +54,50 @@ export default function Sidebar() {
           <MenuIcon />
         </button>
         <nav className="sidebar-nav" aria-label="Dashboard tools">
-          <Link className={`sidebar-tool ${pathname.startsWith("/profile") ? "active" : ""}`} href={profileUrl} title="Edit profile" onClick={() => setSidebarOpen(false)}>
-            <ProfileIcon />
-            <span>Profile</span>
-          </Link>
-          <Link className={`sidebar-tool ${pathname.startsWith("/practice") ? "active" : ""}`} href="/practice" title="Practice questions" onClick={() => setSidebarOpen(false)}>
-            <PracticeIcon />
-            <span>Practice</span>
-          </Link>
-          <Link className={`sidebar-tool ${pathname === "/questions" ? "active" : ""}`} href="/questions" title="Question library" onClick={() => setSidebarOpen(false)}>
-            <LibraryIcon />
-            <span>Library</span>
-          </Link>
-          <Link className={`sidebar-tool ${pathname === "/stats" ? "active" : ""}`} href="/stats" title="View stats" onClick={() => setSidebarOpen(false)}>
-            <StatsIcon />
-            <span>Stats</span>
-          </Link>
-          <Link className={`sidebar-tool ${pathname === "/how-to-use" ? "active" : ""}`} href="/how-to-use" title="How to use OA Duck" onClick={() => setSidebarOpen(false)}>
-            <HelpIcon />
-            <span>How to use</span>
-          </Link>
-          {session?.user?.role === "ADMIN" && (
+          {session?.user?.role === "ADMIN" && viewRole === "ADMIN" ? (
             <>
-              <div className="sidebar-divider" />
-              <Link className={`sidebar-tool ${pathname.startsWith("/admin") ? "active" : ""}`} href="/admin" title="Admin dashboard" onClick={() => setSidebarOpen(false)}>
+              <Link className={`sidebar-tool ${pathname === "/admin" ? "active" : ""}`} href="/admin" title="Admin dashboard" onClick={() => setSidebarOpen(false)}>
                 <AdminIcon />
-                <span>Admin</span>
+                <span>Dashboard</span>
+              </Link>
+              <Link className={`sidebar-tool ${pathname === "/admin/users" ? "active" : ""}`} href="/admin/users" title="Manage users" onClick={() => setSidebarOpen(false)}>
+                <UsersIcon />
+                <span>Manage Users</span>
+              </Link>
+              <Link className={`sidebar-tool ${pathname === "/admin/questions" ? "active" : ""}`} href="/admin/questions" title="Manage questions" onClick={() => setSidebarOpen(false)}>
+                <LibraryIcon />
+                <span>Manage Questions</span>
+              </Link>
+              <Link className={`sidebar-tool ${pathname === "/admin/questions/new" ? "active" : ""}`} href="/admin/questions/new" title="Add question" onClick={() => setSidebarOpen(false)}>
+                <AddIcon />
+                <span>Add Question</span>
+              </Link>
+              <Link className={`sidebar-tool ${pathname === "/admin/new-admin" ? "active" : ""}`} href="/admin/new-admin" title="Add admin" onClick={() => setSidebarOpen(false)}>
+                <AddUserIcon />
+                <span>Add Admin</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link className={`sidebar-tool ${pathname.startsWith("/profile") ? "active" : ""}`} href={profileUrl} title="Edit profile" onClick={() => setSidebarOpen(false)}>
+                <ProfileIcon />
+                <span>Profile</span>
+              </Link>
+              <Link className={`sidebar-tool ${pathname.startsWith("/practice") ? "active" : ""}`} href="/practice" title="Practice questions" onClick={() => setSidebarOpen(false)}>
+                <PracticeIcon />
+                <span>Practice</span>
+              </Link>
+              <Link className={`sidebar-tool ${pathname === "/questions" ? "active" : ""}`} href="/questions" title="Question library" onClick={() => setSidebarOpen(false)}>
+                <LibraryIcon />
+                <span>Library</span>
+              </Link>
+              <Link className={`sidebar-tool ${pathname === "/stats" ? "active" : ""}`} href="/stats" title="View stats" onClick={() => setSidebarOpen(false)}>
+                <StatsIcon />
+                <span>Stats</span>
+              </Link>
+              <Link className={`sidebar-tool ${pathname === "/how-to-use" ? "active" : ""}`} href="/how-to-use" title="How to use OA Duck" onClick={() => setSidebarOpen(false)}>
+                <HelpIcon />
+                <span>How to use</span>
               </Link>
             </>
           )}
@@ -115,4 +146,16 @@ function LogoutIcon() {
 
 function AdminIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" /><path d="M9 12l2 2 4-4" /></svg>;
+}
+
+function AddIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>;
+}
+
+function UsersIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+}
+
+function AddUserIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>;
 }
