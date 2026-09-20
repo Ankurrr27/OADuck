@@ -13,17 +13,18 @@ enum Role {
 }
 
 model User {
-  id           String     @id @default(uuid()) @db.Uuid
-  email        String     @unique
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique
   name         String?
-  username     String?    @unique
-  description  String?    @db.Text
-  passwordHash String?    @map("password_hash")
+  username     String?      @unique
+  description  String?      @db.Text
+  passwordHash String?      @map("password_hash")
   image        String?
-  role         Role       @default(USER)
+  role         Role         @default(USER)
   questions    Question[]
   sheets       Sheet[]
   sessions     Session[]
+  submissions  Submission[]
 
   @@map("user")
 }
@@ -51,6 +52,7 @@ model Question {
   testCases        TestCase[]
   optimalSolutions OptimalSolution[]
   sheetQuestions   SheetQuestion[]
+  submissions      Submission[]
 
   @@map("question")
 }
@@ -76,6 +78,13 @@ model SheetQuestion {
 }
 
 model TestCase {
+  id             String       @id @default(uuid()) @db.Uuid
+  questionId     String       @map("question_id") @db.Uuid
+  isSample       Boolean      @map("is_sample")
+  input          String       @default("") @db.Text
+  expectedOutput String       @default("") @map("expected_output") @db.Text
+  question       Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  submissions    Submission[]
   id          String       @id @default(uuid()) @db.Uuid
   questionId  String       @map("question_id") @db.Uuid
   input       String       @db.Text
@@ -144,12 +153,22 @@ model DoubtQuery {
 model Submission {
   id               String    @id @default(uuid()) @db.Uuid
   sessionId        String    @map("session_id") @db.Uuid
+  userId           String?   @map("user_id") @db.Uuid
+  questionId       String?   @map("question_id") @db.Uuid
   language         String
+  sourceCode       String?   @map("source_code") @db.Text
   status           String
+  runtimeMs        Int?      @map("runtime_ms")
+  memoryKb         Int?      @map("memory_kb")
+  passedTests      Int       @default(0) @map("passed_tests")
+  totalTests       Int       @default(0) @map("total_tests")
+  createdAt        DateTime  @default(now()) @map("created_at")
   failedTestCaseId String?   @map("failed_test_case_id") @db.Uuid
   actualOutput     String?   @map("actual_output") @db.Text
   errorMessage     String?   @map("error_message") @db.Text
   session          Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user             User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem          Question? @relation(fields: [questionId], references: [id], onDelete: Cascade)
   failedTestCase   TestCase? @relation(fields: [failedTestCaseId], references: [id])
 
   @@map("submission")

@@ -42,3 +42,7 @@ next-env.d.ts
 .neon
 
 /src/generated/prisma
+
+# Downloaded Judge0 release and generated service secrets
+/judge0/
+judge0-v*.zip

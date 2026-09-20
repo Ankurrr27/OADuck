@@ -6,6 +6,7 @@ import Link from "next/link";
 import AppHeader from "../../../../components/AppHeader";
 import Sidebar from "../../../../components/Sidebar";
 import PageLoader from "../../../../components/PageLoader";
+import { parseLeetCodeExamples } from "@/lib/leetcodeExamples";
 
 export default function EditQuestionPage() {
   const router = useRouter();
@@ -22,6 +23,9 @@ export default function EditQuestionPage() {
   const [topics, setTopics] = useState("");
   const [examples, setExamples] = useState([]);
   const [constraints, setConstraints] = useState([]);
+  const [examplesText, setExamplesText] = useState("[]");
+  const [constraintsText, setConstraintsText] = useState("[]");
+  const [testCases, setTestCases] = useState([]);
   const [expectedTC, setExpectedTC] = useState("");
   const [expectedSC, setExpectedSC] = useState("");
   const [hints, setHints] = useState([]);
@@ -59,6 +63,9 @@ export default function EditQuestionPage() {
         setTopics(q.topics ? q.topics.join(", ") : "");
         setExamples(q.examples || []);
         setConstraints(q.constraints || []);
+        setExamplesText(JSON.stringify(q.examples || [], null, 2));
+        setConstraintsText(JSON.stringify(q.constraints || [], null, 2));
+      setTestCases(q.testCases || []);
         setExpectedTC(q.expectedTC || "");
         setExpectedSC(q.expectedSC || "");
         setHints(q.hints || []);
@@ -76,6 +83,48 @@ export default function EditQuestionPage() {
     if (id) fetchQuestion();
   }, [id]);
 
+  async function handleImport(e) {
+    e.preventDefault();
+    if (!importUrl) {
+      setImportError("Please enter a valid LeetCode problem URL.");
+      return;
+    }
+
+    setIsImporting(true);
+    setImportError("");
+    setImportSuccess(false);
+
+    try {
+      const response = await fetch(`/api/leetcode/problem?url=${encodeURIComponent(importUrl)}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setImportError(data.error || "Failed to import problem.");
+        return;
+      }
+
+      const problem = data.problem;
+      setTitle(problem.title || "");
+      setDifficulty(problem.difficulty || "Easy");
+      setDescription(problem.description || "");
+      setTopics(problem.topics ? problem.topics.join(", ") : "");
+      setExamples(problem.examples || []);
+      setConstraints(problem.constraints || []);
+      setExamplesText(JSON.stringify(problem.examples || [], null, 2));
+      setConstraintsText(JSON.stringify(problem.constraints || [], null, 2));
+      setTestCases(parseLeetCodeExamples(problem.description || description));
+      setLeetcodeSlug(problem.slug || "");
+      setLeetcodeId(problem.questionId || "");
+      setSourceUrl(problem.url || importUrl);
+
+      setImportSuccess(true);
+    } catch (err) {
+      setImportError("An error occurred while communicating with the server.");
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
   async function handleSave(e) {
     e.preventDefault();
 
@@ -89,11 +138,30 @@ export default function EditQuestionPage() {
     setSaveSuccess(false);
 
     try {
+      let parsedExamples;
+      let parsedConstraints;
+      try {
+        parsedExamples = JSON.parse(examplesText || "[]");
+        parsedConstraints = JSON.parse(constraintsText || "[]");
+        if (!Array.isArray(parsedExamples) || !Array.isArray(parsedConstraints)) throw new Error();
+      } catch {
+        setSaveError("Examples and constraints must be valid JSON arrays.");
+        setIsSaving(false);
+        return;
+      }
+
       const payload = {
         title,
         difficulty,
         description,
         topics: topics ? topics.split(",").map(t => t.trim()).filter(Boolean) : [],
+        examples: parsedExamples,
+        constraints: parsedConstraints,
+        source: source || "leetcode",
+        sourceUrl,
+        leetcodeSlug,
+        leetcodeId,
+        testCases: testCases.map(({ id, input, expectedOutput, isSample }) => ({ id, input, expectedOutput, isSample })),
         examples,
         constraints,
         expectedTC,
@@ -228,7 +296,28 @@ export default function EditQuestionPage() {
               <input value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} required={source !== "admin"} placeholder="https://..." />
             </label>
 
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <label>
+                Source
+                <input value={source} onChange={(e) => setSource(e.target.value)} placeholder="leetcode" />
+              </label>
+              <label>
+                LeetCode slug
+                <input value={leetcodeSlug} onChange={(e) => setLeetcodeSlug(e.target.value)} placeholder="two-sum" />
+              </label>
+            </div>
+
             <label>
+              LeetCode ID
+              <input value={leetcodeId} onChange={(e) => setLeetcodeId(e.target.value)} placeholder="1" />
+            </label>
+
+            <label>
+              Description (HTML)
+              <textarea rows={10} value={description} onChange={(e) => setDescription(e.target.value)} />
+              <div style={{ marginTop: "0.5rem", padding: "1rem", border: "1px solid var(--line)", borderRadius: "8px", maxHeight: "260px", overflowY: "auto", background: "#fff" }}>
+                <strong style={{ display: "block", marginBottom: "0.5rem", fontSize: "12px", color: "var(--muted)" }}>Formatted preview</strong>
+                <div dangerouslySetInnerHTML={{ __html: description || "<span style='color: var(--muted)'>No description</span>" }} />
               Constraints (one per line)
               <textarea value={Array.isArray(constraints) ? constraints.join("\n") : ""} onChange={(e) => setConstraints(e.target.value.split("\n").filter(Boolean))} rows={4} />
             </label>
@@ -299,18 +388,38 @@ export default function EditQuestionPage() {
                   ))}
                 </ul>
               </div>
-            )}
+            </label>
 
-            {Array.isArray(constraints) && constraints.length > 0 && (
-              <div style={{ marginTop: "1.5rem" }}>
-                <strong>Constraints</strong>
-                <ul style={{ marginTop: "0.5rem", paddingLeft: "1.5rem" }}>
-                  {constraints.map((c, i) => (
-                    <li key={i} style={{ marginBottom: "0.5rem", color: "var(--muted)" }}>{typeof c === 'string' ? c : JSON.stringify(c)}</li>
-                  ))}
-                </ul>
+            <label>
+              Examples (JSON array)
+              <textarea rows={8} value={examplesText} onChange={(e) => setExamplesText(e.target.value)} spellCheck={false} />
+            </label>
+
+            <label>
+              Constraints (JSON array)
+              <textarea rows={6} value={constraintsText} onChange={(e) => setConstraintsText(e.target.value)} spellCheck={false} />
+            </label>
+
+            <div style={{ marginTop: "1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+                <strong>Run / Submit test cases</strong>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={() => setTestCases(parseLeetCodeExamples(description))}>Parse description examples</button>
+                  <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={() => setTestCases((current) => [...current, { input: "", expectedOutput: "", isSample: true }])}>Add test case</button>
+                </div>
               </div>
-            )}
+              {testCases.length === 0 && <p className="text-sm text-[#6f7771]">No test cases yet. Add public samples and hidden Submit cases here.</p>}
+              {testCases.map((testCase, index) => (
+                <div key={testCase.id || index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "0.5rem", alignItems: "start", marginBottom: "0.75rem" }}>
+                  <textarea rows={3} placeholder="stdin" value={testCase.input || ""} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, input: e.target.value } : item))} />
+                  <textarea rows={3} placeholder="expected stdout" value={testCase.expectedOutput || ""} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, expectedOutput: e.target.value } : item))} />
+                  <div style={{ display: "grid", gap: "0.5rem" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", whiteSpace: "nowrap" }}><input type="checkbox" checked={Boolean(testCase.isSample)} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, isSample: e.target.checked } : item))} /> Public</label>
+                    <button type="button" className="text-xs text-[#a34f43]" onClick={() => setTestCases((current) => current.filter((_, i) => i !== index))}>Remove</button>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <div style={{ marginTop: "2rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
               <button

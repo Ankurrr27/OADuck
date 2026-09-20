@@ -8,6 +8,8 @@ const VALID_SOURCES = new Set(["leetcode", "gfg", "admin"]);
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
+    const session = await auth();
+    const canViewHiddenTests = session?.user?.role === "ADMIN";
 
     const session = await auth();
     const isAdmin = session?.user?.role === "ADMIN";
@@ -26,6 +28,11 @@ export async function GET(request, { params }) {
         sourceUrl: true,
         leetcodeSlug: true,
         leetcodeId: true,
+        testCases: {
+          where: canViewHiddenTests ? {} : { isSample: true },
+          orderBy: { id: "asc" },
+          select: { id: true, input: true, expectedOutput: true, isSample: true },
+        },
         expectedTC: true,
         expectedSC: true,
         hints: { orderBy: { hintOrder: "asc" }, select: { id: true, hintOrder: true, content: true } },
@@ -71,6 +78,7 @@ export async function PUT(request, { params }) {
       sourceUrl,
       leetcodeSlug,
       leetcodeId,
+      testCases,
       expectedTC,
       expectedSC,
       hints,
@@ -100,9 +108,10 @@ export async function PUT(request, { params }) {
       return Response.json({ error: "Question not found" }, { status: 404 });
     }
 
-    const question = await prisma.question.update({
-      where: { id },
-      data: {
+    const question = await prisma.$transaction(async (tx) => {
+      const updated = await tx.question.update({
+        where: { id },
+        data: {
         title,
         description,
         difficulty,
@@ -115,6 +124,22 @@ export async function PUT(request, { params }) {
         expectedSC: expectedSC?.trim() || null,
         leetcodeSlug,
         leetcodeId,
+        },
+      });
+
+      if (Array.isArray(testCases)) {
+        await tx.testCase.deleteMany({ where: { questionId: id } });
+        const validCases = testCases
+          .filter((testCase) => testCase && typeof testCase.input === "string" && typeof testCase.expectedOutput === "string")
+          .map((testCase) => ({
+            questionId: id,
+            input: testCase.input,
+            expectedOutput: testCase.expectedOutput,
+            isSample: Boolean(testCase.isSample),
+          }));
+        if (validCases.length) await tx.testCase.createMany({ data: validCases });
+      }
+      return updated;
         ...(Array.isArray(hints) ? {
           hints: {
             deleteMany: {},

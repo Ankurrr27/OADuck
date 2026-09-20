@@ -72,6 +72,7 @@ export async function POST(request) {
       sourceUrl,
       leetcodeSlug,
       leetcodeId,
+      testCases,
       expectedTC,
       expectedSC,
       hints,
@@ -109,6 +110,19 @@ export async function POST(request) {
         leetcodeSlug,
         leetcodeId,
         createdById: dbUser.id,
+        ...(Array.isArray(testCases)
+          ? {
+              testCases: {
+                create: testCases
+                  .filter((testCase) => testCase && typeof testCase.input === "string" && typeof testCase.expectedOutput === "string")
+                  .map((testCase) => ({
+                    input: testCase.input,
+                    expectedOutput: testCase.expectedOutput,
+                    isSample: Boolean(testCase.isSample),
+                  })),
+              },
+            }
+          : {}),
         hints: Array.isArray(hints) ? {
           create: hints.filter((hint) => hint?.content?.trim()).map((hint, index) => ({
             hintOrder: index + 1,
