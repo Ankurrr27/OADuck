@@ -3,10 +3,16 @@ export const runtime = "nodejs";
 import { auth } from "../../../../auth";
 import prisma from "../../../../lib/prisma";
 
+const VALID_SOURCES = new Set(["leetcode", "gfg", "admin"]);
+
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
+    const session = await auth();
+    const canViewHiddenTests = session?.user?.role === "ADMIN";
 
+    const session = await auth();
+    const isAdmin = session?.user?.role === "ADMIN";
     const question = await prisma.question.findUnique({
       where: { id },
       select: {
@@ -22,6 +28,21 @@ export async function GET(request, { params }) {
         sourceUrl: true,
         leetcodeSlug: true,
         leetcodeId: true,
+        testCases: {
+          where: canViewHiddenTests ? {} : { isSample: true },
+          orderBy: { id: "asc" },
+          select: { id: true, input: true, expectedOutput: true, isSample: true },
+        },
+        expectedTC: true,
+        expectedSC: true,
+        hints: { orderBy: { hintOrder: "asc" }, select: { id: true, hintOrder: true, content: true } },
+        testCases: {
+          where: isAdmin ? undefined : { isHidden: false },
+          orderBy: { id: "asc" },
+          select: { id: true, input: true, output: true, isHidden: true },
+        },
+        createdBy: { select: { id: true, name: true, email: true } },
+        ...(isAdmin ? { optimalSolutions: { orderBy: { language: "asc" }, select: { id: true, language: true, code: true } } } : {}),
       },
     });
 
@@ -57,10 +78,29 @@ export async function PUT(request, { params }) {
       sourceUrl,
       leetcodeSlug,
       leetcodeId,
+      testCases,
+      expectedTC,
+      expectedSC,
+      hints,
+      testCases,
+      optimalSolutions,
     } = body;
 
-    if (!title || !difficulty) {
+    const sourceValue = source || "admin";
+    if (!title?.trim() || !difficulty?.trim()) {
       return Response.json({ error: "Title and difficulty are required" }, { status: 400 });
+    }
+    if (!VALID_SOURCES.has(sourceValue)) {
+      return Response.json({ error: "Source must be leetcode, gfg, or admin" }, { status: 400 });
+    }
+    if ((sourceValue === "leetcode" || sourceValue === "gfg") && !sourceUrl?.trim()) {
+      return Response.json({ error: "A source URL is required for LeetCode and GFG questions" }, { status: 400 });
+    }
+    if (Array.isArray(hints) && hints.filter((hint) => hint?.content?.trim()).length > 2) {
+      return Response.json({ error: "A question can have at most two hints" }, { status: 400 });
+    }
+    if (Array.isArray(testCases) && testCases.some((testCase) => !String(testCase?.input || "").trim() || !String(testCase?.output || "").trim())) {
+      return Response.json({ error: "Every test case needs both input and output" }, { status: 400 });
     }
 
     const existing = await prisma.question.findUnique({ where: { id } });
@@ -68,19 +108,74 @@ export async function PUT(request, { params }) {
       return Response.json({ error: "Question not found" }, { status: 404 });
     }
 
-    const question = await prisma.question.update({
-      where: { id },
-      data: {
+    const question = await prisma.$transaction(async (tx) => {
+      const updated = await tx.question.update({
+        where: { id },
+        data: {
         title,
         description,
         difficulty,
         topics: topics || [],
         examples: examples || [],
         constraints: constraints || [],
-        source: source || existing.source,
-        sourceUrl,
+        source: sourceValue,
+        sourceUrl: sourceUrl?.trim() || null,
+        expectedTC: expectedTC?.trim() || null,
+        expectedSC: expectedSC?.trim() || null,
         leetcodeSlug,
         leetcodeId,
+        },
+      });
+
+      if (Array.isArray(testCases)) {
+        await tx.testCase.deleteMany({ where: { questionId: id } });
+        const validCases = testCases
+          .filter((testCase) => testCase && typeof testCase.input === "string" && typeof testCase.expectedOutput === "string")
+          .map((testCase) => ({
+            questionId: id,
+            input: testCase.input,
+            expectedOutput: testCase.expectedOutput,
+            isSample: Boolean(testCase.isSample),
+          }));
+        if (validCases.length) await tx.testCase.createMany({ data: validCases });
+      }
+      return updated;
+        ...(Array.isArray(hints) ? {
+          hints: {
+            deleteMany: {},
+            create: hints.filter((hint) => hint?.content?.trim()).map((hint, index) => ({
+              hintOrder: index + 1,
+              content: hint.content.trim(),
+            })),
+          },
+        } : {}),
+        ...(Array.isArray(testCases) ? {
+          testCases: {
+            deleteMany: { id: { notIn: testCases.filter((testCase) => testCase?.id).map((testCase) => testCase.id) } },
+            update: testCases.filter((testCase) => testCase?.id).map((testCase) => ({
+              where: { id: testCase.id },
+              data: {
+                input: String(testCase.input || "").trim(),
+                output: String(testCase.output || "").trim(),
+                isHidden: Boolean(testCase.isHidden),
+              },
+            })),
+            create: testCases.filter((testCase) => !testCase?.id).map((testCase) => ({
+              input: String(testCase.input || "").trim(),
+              output: String(testCase.output || "").trim(),
+              isHidden: Boolean(testCase.isHidden),
+            })),
+          },
+        } : {}),
+        ...(Array.isArray(optimalSolutions) ? {
+          optimalSolutions: {
+            deleteMany: {},
+            create: optimalSolutions.filter((solution) => solution?.language?.trim() && solution?.code?.trim()).map((solution) => ({
+              language: solution.language.trim(),
+              code: solution.code.trim(),
+            })),
+          },
+        } : {}),
       },
     });
 

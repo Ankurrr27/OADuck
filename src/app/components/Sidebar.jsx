@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 
-export default function Sidebar() {
+export default function Sidebar({ compact = false }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(200);
   const pathname = usePathname();
@@ -67,8 +67,8 @@ export default function Sidebar() {
         onClick={() => setSidebarOpen(false)}
       />
       <aside
-        className={`app-sidebar fixed left-0 top-14 z-20 flex h-[calc(100dvh-3.5rem)] w-[min(300px,86vw)] flex-col overflow-y-auto border-r border-[#dfe1da] bg-[#fbfcf9] p-3 shadow-[16px_0_40px_rgba(23,34,30,.18)] transition-transform duration-300 ease-out md:sticky md:top-[72px] md:left-auto md:self-start md:h-[calc(100dvh-72px)] md:min-h-0 md:w-[var(--sidebar-width)] md:flex md:flex-col md:overflow-y-auto md:p-3 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
-        style={{ "--sidebar-width": `${sidebarWidth}px` }}
+        className={`app-sidebar ${compact ? "app-sidebar--compact" : ""} fixed left-0 top-14 z-20 flex h-[calc(100dvh-3.5rem)] w-[min(300px,86vw)] flex-col overflow-y-auto border-r border-[#dfe1da] bg-[#fbfcf9] p-3 shadow-[16px_0_40px_rgba(23,34,30,.18)] transition-[width,transform] duration-300 ease-out md:sticky md:top-[72px] md:left-auto md:self-start md:h-[calc(100dvh-72px)] md:min-h-0 md:w-[var(--sidebar-width)] md:flex md:flex-col md:overflow-y-auto md:p-3 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
+        style={{ "--sidebar-width": `${compact ? 68 : sidebarWidth}px` }}
       >
         {session?.user?.role === "ADMIN" && (
           <div className="mb-3 rounded-lg border border-[#dfe8df] bg-[#f4f7f3] p-3 sm:hidden">
@@ -94,6 +94,10 @@ export default function Sidebar() {
               <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/questions" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/questions" title="Manage questions" onClick={() => setSidebarOpen(false)}>
                 <LibraryIcon />
                 <span>Manage Questions</span>
+              </Link>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/sheets" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/sheets" title="Manage sheets" onClick={() => setSidebarOpen(false)}>
+                <LibraryIcon />
+                <span>Manage Sheets</span>
               </Link>
               <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/questions/new" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/questions/new" title="Add question" onClick={() => setSidebarOpen(false)}>
                 <AddIcon />

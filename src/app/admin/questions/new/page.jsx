@@ -5,16 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppHeader from "../../../components/AppHeader";
 import Sidebar from "../../../components/Sidebar";
+import { parseLeetCodeExamples } from "@/lib/leetcodeExamples";
 
 export default function NewQuestionPage() {
   const router = useRouter();
   
-  // Import State
-  const [importUrl, setImportUrl] = useState("");
-  const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState("");
-  const [importSuccess, setImportSuccess] = useState(false);
-
   // Form State
   const [title, setTitle] = useState("");
   const [difficulty, setDifficulty] = useState("Easy");
@@ -22,11 +17,15 @@ export default function NewQuestionPage() {
   const [topics, setTopics] = useState("");
   const [examples, setExamples] = useState([]);
   const [constraints, setConstraints] = useState([]);
+  const [testCases, setTestCases] = useState([]);
+  const [expectedTC, setExpectedTC] = useState("");
+  const [expectedSC, setExpectedSC] = useState("");
+  const [source, setSource] = useState("admin");
+  const [hints, setHints] = useState("");
   
-  // Meta state
-  const [leetcodeSlug, setLeetcodeSlug] = useState("");
-  const [leetcodeId, setLeetcodeId] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
+  const [testCases, setTestCases] = useState([]);
+  const [optimalSolutions, setOptimalSolutions] = useState([{ language: "JavaScript", code: "" }]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -59,6 +58,7 @@ export default function NewQuestionPage() {
       setTopics(problem.topics ? problem.topics.join(", ") : "");
       setExamples(problem.examples || []);
       setConstraints(problem.constraints || []);
+      setTestCases(parseLeetCodeExamples(problem.description || ""));
       setLeetcodeSlug(problem.slug || "");
       setLeetcodeId(problem.questionId || "");
       setSourceUrl(problem.url || importUrl);
@@ -90,10 +90,16 @@ export default function NewQuestionPage() {
         topics: topics ? topics.split(",").map(t => t.trim()).filter(Boolean) : [],
         examples,
         constraints,
-        source: "leetcode",
+        expectedTC,
+        expectedSC,
+        hints: hints.split("\n").map((content) => ({ content })).filter((hint) => hint.content.trim()),
+        source,
         sourceUrl,
         leetcodeSlug,
         leetcodeId,
+        testCases,
+        testCases,
+        optimalSolutions,
       };
 
       const response = await fetch("/api/questions", {
@@ -129,38 +135,7 @@ export default function NewQuestionPage() {
           
           <div style={{ marginBottom: "2rem" }}>
             <h1>Add new question</h1>
-            <p className="mt-4 text-sm text-[#6f7771]">Import a problem from LeetCode or manually create one.</p>
-          </div>
-
-          <div className="grid min-h-36 content-between rounded-lg border border-[#dfe1da] bg-[#fffefa] p-4.5 [&_span]:text-[11px] [&_span]:text-[#6f7771] [&_small]:text-[11px] [&_small]:text-[#6f7771] [&_strong]:text-[38px] [&_strong]:font-medium [&_strong]:tracking-[-.06em] [&_strong]:text-[#123f36]" style={{ padding: "1.5rem", marginBottom: "3rem", display: "block" }}>
-            <h2 style={{ fontSize: "1.2rem", marginBottom: "1rem" }}>Import from LeetCode</h2>
-            <form onSubmit={handleImport} style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-              <div style={{ flex: 1 }}>
-                <input 
-                  className="min-h-10 w-full rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 text-[13px] outline-none focus:border-[#7c9b8d] focus:ring-3 focus:ring-[#123f36]/10"
-                  style={{ margin: 0 }}
-                  value={importUrl}
-                  onChange={(e) => setImportUrl(e.target.value)}
-                  placeholder="https://leetcode.com/problems/two-sum/"
-                />
-              </div>
-              <button 
-                className="inline-flex min-h-10 items-center justify-center rounded-md border-0 bg-[#123f36] px-4 py-2 text-[13px] font-semibold text-[#f7f5ed] no-underline disabled:cursor-wait disabled:opacity-65" 
-                type="submit" 
-                disabled={isImporting}
-                style={{ marginTop: 0 }}
-              >
-                {isImporting ? "Fetching problem..." : "Import Problem"}
-              </button>
-            </form>
-            
-            {importError && (
-              <p className="text-sm text-[#6f7771]" style={{ marginTop: "1rem", color: "#d32f2f" }}>{importError}</p>
-            )}
-            
-            {importSuccess && (
-              <p className="text-sm text-[#6f7771]" style={{ marginTop: "1rem", color: "var(--green)" }}>Problem imported successfully. Review and save below.</p>
-            )}
+            <p className="mt-4 text-sm text-[#6f7771]">Enter the question details manually for your practice library.</p>
           </div>
 
           <form className="mt-11 grid max-w-[560px] gap-[18px] [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-semibold [&_label]:text-[#505a53] [&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-[#d7dad3] [&_input]:bg-[#fffefa] [&_input]:px-3 [&_textarea]:w-full [&_textarea]:rounded-md [&_textarea]:border [&_textarea]:border-[#d7dad3] [&_textarea]:bg-[#fffefa] [&_textarea]:p-3" onSubmit={handleSave}>
@@ -191,20 +166,72 @@ export default function NewQuestionPage() {
             </label>
 
             <label>
-              Description Preview (HTML)
-              <div 
-                style={{ 
-                  padding: "1rem", 
-                  border: "1px solid var(--line)", 
-                  borderRadius: "8px", 
-                  maxHeight: "300px", 
-                  overflowY: "auto",
-                  marginTop: "6px",
-                  background: "#fff"
-                }}
-                dangerouslySetInnerHTML={{ __html: description || "<span style='color: var(--muted)'>No description</span>" }}
-              />
+              Source
+              <select value={source} onChange={(e) => setSource(e.target.value)}>
+                <option value="admin">Admin</option>
+                <option value="leetcode">LeetCode</option>
+                <option value="gfg">GeeksforGeeks</option>
+              </select>
             </label>
+
+            <label>
+              Source URL {source !== "admin" && "(required)"}
+              <input value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} required={source !== "admin"} placeholder="https://..." />
+            </label>
+
+            <label>
+              Constraints (one per line)
+              <textarea value={Array.isArray(constraints) ? constraints.join("\n") : ""} onChange={(e) => setConstraints(e.target.value.split("\n").filter(Boolean))} rows={4} />
+            </label>
+
+            <label>
+              Hints (maximum 2, one per line)
+              <textarea value={hints} onChange={(e) => setHints(e.target.value.split("\n").slice(0, 2).join("\n"))} rows={4} />
+            </label>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <label>
+                Expected time complexity
+                <input value={expectedTC} onChange={(e) => setExpectedTC(e.target.value)} placeholder="O(n)" />
+              </label>
+              <label>
+                Expected space complexity
+                <input value={expectedSC} onChange={(e) => setExpectedSC(e.target.value)} placeholder="O(1)" />
+              </label>
+            </div>
+
+            <label>
+              Description (HTML or plain text)
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={8} placeholder="Describe the problem..." />
+            </label>
+
+            <fieldset style={{ display: "grid", gap: "0.75rem", border: "1px solid var(--line)", padding: "1rem" }}>
+              <legend>Optimal solutions</legend>
+              {optimalSolutions.map((solution, index) => (
+                <div key={index} style={{ display: "grid", gap: "0.5rem" }}>
+                  <input value={solution.language} onChange={(event) => setOptimalSolutions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, language: event.target.value } : item))} placeholder="Language" />
+                  <textarea value={solution.code} onChange={(event) => setOptimalSolutions((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, code: event.target.value } : item))} rows={8} placeholder="Paste the optimal solution code" />
+                  <button type="button" onClick={() => setOptimalSolutions((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="inline-flex min-h-9 w-fit items-center justify-center rounded-md border border-[#d7dad3] px-3 py-2 text-xs text-[#b33a32]">Remove solution</button>
+                </div>
+              ))}
+              <button type="button" onClick={() => setOptimalSolutions((current) => [...current, { language: "", code: "" }])} className="inline-flex min-h-9 w-fit items-center justify-center rounded-md border border-[#d7dad3] px-3 py-2 text-xs font-semibold text-[#123f36]">+ Add solution</button>
+            </fieldset>
+
+            <fieldset style={{ display: "grid", gap: "0.75rem", border: "1px solid var(--line)", padding: "1rem" }}>
+              <legend>Test cases</legend>
+              {testCases.map((testCase, index) => (
+                <div key={index} style={{ display: "grid", gap: "0.6rem", borderBottom: "1px solid var(--line)", paddingBottom: "0.75rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <strong>Test case {index + 1}</strong>
+                    <button type="button" onClick={() => setTestCases((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Remove test case ${index + 1}`} title="Remove test case" style={{ display: "grid", placeItems: "center", width: "2rem", height: "2rem", border: "1px solid #d7dad3", borderRadius: "0.375rem", background: "transparent", color: "#b33a32", cursor: "pointer", fontSize: "1.25rem", lineHeight: 1 }}>×</button>
+                  </div>
+                  <textarea value={testCase.input} onChange={(event) => setTestCases((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, input: event.target.value } : item))} rows={3} placeholder="Input" required />
+                  <textarea value={testCase.output} onChange={(event) => setTestCases((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, output: event.target.value } : item))} rows={3} placeholder="Expected output" required />
+                  <label style={{ display: "flex", gridTemplateColumns: "none", flexDirection: "row", gap: "0.4rem" }}>Visibility<select value={testCase.isHidden ? "hidden" : "shown"} onChange={(event) => setTestCases((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, isHidden: event.target.value === "hidden" } : item))}><option value="shown">Shown</option><option value="hidden">Hidden</option></select></label>
+                </div>
+              ))}
+              <button type="button" onClick={() => setTestCases((current) => [...current, { input: "", output: "", isHidden: true }])} className="inline-flex min-h-9 w-fit items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-2 text-xs font-semibold text-[#123f36]">+ Add test case</button>
+            </fieldset>
 
             {examples.length > 0 && (
               <div style={{ marginTop: "1.5rem" }}>
@@ -227,6 +254,20 @@ export default function NewQuestionPage() {
                 </ul>
               </div>
             )}
+
+            <div style={{ marginTop: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <strong>Run / Submit test cases</strong>
+                <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={() => setTestCases((current) => [...current, { input: "", expectedOutput: "", isSample: true }])}>Add test case</button>
+              </div>
+              {testCases.map((testCase, index) => (
+                <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "0.5rem", marginTop: "0.75rem" }}>
+                  <textarea rows={3} placeholder="stdin" value={testCase.input} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, input: e.target.value } : item))} />
+                  <textarea rows={3} placeholder="expected stdout" value={testCase.expectedOutput} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, expectedOutput: e.target.value } : item))} />
+                  <label style={{ display: "flex", gap: "0.3rem", alignItems: "center", fontSize: "12px" }}><input type="checkbox" checked={testCase.isSample} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, isSample: e.target.checked } : item))} /> Public</label>
+                </div>
+              ))}
+            </div>
 
             <div style={{ marginTop: "2rem", display: "flex", alignItems: "center", gap: "1rem" }}>
               <button 
