@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { auth } from "../../../../auth";
 import prisma from "../../../../lib/prisma";
-import { executeCode, normalizeResult } from "../../../../lib/judge0";
+import { executeCode, normalizeResult, normalizeStdin } from "../../../../lib/judge0";
 
 function normalizeOutput(value) {
   return String(value ?? "").replace(/\r\n/g, "\n").trim().split(/\s+/).filter(Boolean).join(" ");
@@ -32,16 +32,17 @@ export async function POST(request) {
     let finalResult = null;
     let failedTestCaseId = null;
     for (const testCase of hiddenCases.slice(0, 100)) {
-      finalResult = normalizeResult(await executeCode({ language: "cpp", sourceCode: body.code, stdin: testCase.input, timeoutSeconds: 2 }));
+      finalResult = normalizeResult(await executeCode({ language: "cpp", sourceCode: body.code, stdin: normalizeStdin(testCase.input), timeoutSeconds: 2 }));
       if (finalResult.statusId !== 3) { failedTestCaseId = testCase.id; break; }
       if (normalizeOutput(finalResult.stdout) !== normalizeOutput(testCase.expectedOutput)) { finalResult.verdict = "Wrong Answer"; failedTestCaseId = testCase.id; break; }
       passedTests += 1;
     }
     const totalTests = Math.min(hiddenCases.length, 100);
     const verdict = passedTests === totalTests ? "Accepted" : finalResult?.verdict || "Runtime Error";
+    const failedTestNumber = passedTests < totalTests ? passedTests + 1 : null;
     await prisma.submission.create({ data: { sessionId: practiceSession.id, userId: user.id, questionId: question.id, language: "cpp", sourceCode: body.code, status: verdict, runtimeMs: finalResult?.time ? Math.round(Number(finalResult.time) * 1000) : null, memoryKb: finalResult?.memory || null, passedTests, totalTests, failedTestCaseId, actualOutput: finalResult?.stdout || null, errorMessage: finalResult?.stderr || finalResult?.compileOutput || null } });
 
-    return Response.json({ success: true, status: verdict, passedTests, totalTests, runtime: finalResult?.time || null, memory: finalResult?.memory || null });
+    return Response.json({ success: true, status: verdict, passedTests, totalTests, failedTestNumber, runtime: finalResult?.time || null, memory: finalResult?.memory || null });
   } catch (error) {
     console.error("Code submission failed:", error);
     return Response.json({ success: false, error: error.message || "Code submission failed." }, { status: 502 });

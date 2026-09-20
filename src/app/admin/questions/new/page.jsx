@@ -30,6 +30,17 @@ export default function NewQuestionPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [testCaseMessage, setTestCaseMessage] = useState("");
+
+  function fetchTestCasesFromDescription() {
+    const parsed = parseLeetCodeExamples(description);
+    if (!parsed.length) {
+      setTestCaseMessage("No Example input/output pairs found in the description.");
+      return;
+    }
+    setTestCases((current) => [...parsed, ...current.filter((testCase) => !testCase.isSample)]);
+    setTestCaseMessage(`${parsed.length} sample test case${parsed.length === 1 ? "" : "s"} fetched.`);
+  }
 
   async function handleSave(e) {
     e.preventDefault();
@@ -201,8 +212,12 @@ export default function NewQuestionPage() {
             <div style={{ marginTop: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <strong>Run / Submit test cases</strong>
-                <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={() => setTestCases((current) => [...current, { input: "", expectedOutput: "", isSample: true }])}>Add test case</button>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={fetchTestCasesFromDescription}>Fetch test cases</button>
+                  <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={() => setTestCases((current) => [...current, { input: "", expectedOutput: "", isSample: true }])}>Add test case</button>
+                </div>
               </div>
+              {testCaseMessage && <p className="text-sm text-[#6f7771]" style={{ margin: "0.5rem 0 0" }}>{testCaseMessage}</p>}
               {testCases.map((testCase, index) => (
                 <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "0.5rem", marginTop: "0.75rem" }}>
                   <textarea rows={3} placeholder="stdin" value={testCase.input} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, input: e.target.value } : item))} />

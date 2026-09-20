@@ -41,6 +41,7 @@ export default function EditQuestionPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [testCaseMessage, setTestCaseMessage] = useState("");
 
   // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -148,6 +149,16 @@ export default function EditQuestionPage() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function fetchTestCasesFromDescription() {
+    const parsed = parseLeetCodeExamples(description);
+    if (!parsed.length) {
+      setTestCaseMessage("No Example input/output pairs found in the description.");
+      return;
+    }
+    setTestCases((current) => [...parsed, ...current.filter((testCase) => !testCase.isSample)]);
+    setTestCaseMessage(`${parsed.length} sample test case${parsed.length === 1 ? "" : "s"} fetched. Save changes to persist them.`);
   }
 
   async function handleDelete() {
@@ -327,10 +338,11 @@ export default function EditQuestionPage() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
                 <strong>Run / Submit test cases</strong>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={() => setTestCases(parseLeetCodeExamples(description))}>Parse description examples</button>
+                  <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={fetchTestCasesFromDescription}>Fetch test cases</button>
                   <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={() => setTestCases((current) => [...current, { input: "", expectedOutput: "", isSample: true }])}>Add test case</button>
                 </div>
               </div>
+              {testCaseMessage && <p className="text-sm text-[#6f7771]" style={{ margin: "0 0 0.75rem" }}>{testCaseMessage}</p>}
               {testCases.length === 0 && <p className="text-sm text-[#6f7771]">No test cases yet. Add public samples and hidden Submit cases here.</p>}
               {testCases.map((testCase, index) => (
                 <div key={testCase.id || index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "0.5rem", alignItems: "start", marginBottom: "0.75rem" }}>

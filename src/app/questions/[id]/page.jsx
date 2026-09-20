@@ -48,29 +48,8 @@ const languages = {
 };
 
 function starterCodeForQuestion(question) {
-  if (question?.title?.toLowerCase().includes("palindrome number")) {
-    return `#include <bits/stdc++.h>
-using namespace std;
-
-class Solution {
-public:
-    bool isPalindrome(int x) {
-        if (x < 0) return false;
-        string value = to_string(x);
-        return equal(value.begin(), value.begin() + value.size() / 2, value.rbegin());
-    }
-};
-
-int main() {
-    int x;
-    cin >> x;
-    Solution solution;
-    cout << boolalpha << solution.isPalindrome(x) << "\\n";
-    return 0;
-}
-
-`;
-  }
+  // Learners start with a clean editor. Saved solutions are only revealed
+  // through the admin-only action rendered when the API returns them.
   return languages.cpp.boilerplate;
 }
 
@@ -105,6 +84,7 @@ export default function SolveQuestionPage() {
   const [sampleResults, setSampleResults] = useState([]);
   const [selectedTestIndex, setSelectedTestIndex] = useState(0);
   const [submissionSummary, setSubmissionSummary] = useState(null);
+  const [showSolution, setShowSolution] = useState(false);
   const [activeConsoleTab, setActiveConsoleTab] = useState("terminal");
   const [isOutputOpen, setIsOutputOpen] = useState(true);
   const [problemWidth, setProblemWidth] = useState(43);
@@ -236,6 +216,19 @@ export default function SolveQuestionPage() {
     setSubmissionSummary(null);
     setActiveConsoleTab("terminal");
     setEditorMessage("Solution reset to starter code.");
+  }
+
+  function toggleSolution() {
+    const savedSolution = question?.optimalSolutions?.find((solution) => {
+      const value = String(solution.language || "").toLowerCase();
+      return value === "cpp" || value.includes("c++");
+    });
+    if (!savedSolution) return;
+    const nextShow = !showSolution;
+    const nextCode = nextShow ? savedSolution.code : starterCodeForQuestion(question);
+    setShowSolution(nextShow);
+    setCodeByLanguage((current) => ({ ...current, cpp: nextCode }));
+    editorRef.current?.setValue(nextCode);
   }
 
   useEffect(() => {
@@ -395,6 +388,7 @@ export default function SolveQuestionPage() {
               </div>
               <div className="editor-actions">
                 <button type="button" className="editor-button editor-button--quiet" onClick={resetSolution}>Reset solution</button>
+                {question.optimalSolutions?.length > 0 && <button type="button" className="editor-button editor-button--quiet" onClick={toggleSolution}>{showSolution ? "Hide solution" : "Show solution"}</button>}
                 <button type="button" className="editor-button editor-button--quiet" onClick={() => setEditorMessage("Code saved locally for this session.")}>Save</button>
                 <button type="button" className="editor-button editor-button--run" onClick={runCode} disabled={isRunning || isSubmitting}>{isRunning ? "Running…" : "Run"}</button>
                 <button type="button" className="editor-button editor-button--submit" onClick={submitCode} disabled={isRunning || isSubmitting}>{isSubmitting ? "Submitting…" : "Submit"}</button>
@@ -434,7 +428,10 @@ export default function SolveQuestionPage() {
                   <pre className="editor-terminal">{output || "Run your code to see terminal output here."}</pre>
                 ) : (
                   <div className="editor-test-results">
-                    {submissionSummary && <div className={`editor-test-summary ${submissionSummary.status === "Accepted" ? "is-accepted" : "is-failed"}`}><strong>{submissionSummary.status}</strong><span>Passed: {submissionSummary.passedTests} / {submissionSummary.totalTests}</span><span>Runtime: {submissionSummary.runtime ? `${Math.round(Number(submissionSummary.runtime) * 1000)} ms` : "0 ms"}</span></div>}
+                    {submissionSummary && <div className={`editor-submission-result ${submissionSummary.status === "Accepted" ? "is-accepted" : "is-failed"}`}>
+                      <div className="editor-submission-result__headline"><strong>{submissionSummary.status}</strong><span>Passed: {submissionSummary.passedTests} / {submissionSummary.totalTests} test cases</span><span>Runtime: {submissionSummary.runtime ? `${Math.round(Number(submissionSummary.runtime) * 1000)} ms` : "0 ms"}</span></div>
+                      {submissionSummary.failedTestNumber && <div className="editor-submission-result__failed">Failed on test case {submissionSummary.failedTestNumber}. Hidden test details are not shown.</div>}
+                    </div>}
                     {sampleResults.length > 0 && <SampleResultDetails results={sampleResults} selectedIndex={selectedTestIndex} onSelect={setSelectedTestIndex} />}
                     {sampleResults.length > 0 ? sampleResults.map((item, index) => (
                       <div className={`editor-test-card ${item.passed ? "is-passed" : "is-failed"}`} key={index}>

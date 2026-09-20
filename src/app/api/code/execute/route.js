@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import { auth } from "../../../../auth";
 import prisma from "../../../../lib/prisma";
-import { executeCode, normalizeResult } from "../../../../lib/judge0";
+import { executeCode, normalizeResult, normalizeStdin } from "../../../../lib/judge0";
 
 function normalizeOutput(value) {
   return String(value ?? "").replace(/\r\n/g, "\n").trim().split(/\s+/).filter(Boolean).join(" ");
@@ -24,13 +24,13 @@ export async function POST(request) {
         const result = normalizeResult(await executeCode({
           language: body.language,
           sourceCode: body.code,
-          stdin: typeof body.stdin === "string" ? body.stdin : "",
+          stdin: normalizeStdin(typeof body.stdin === "string" ? body.stdin : ""),
         }));
         return Response.json({ success: true, warning: "No public test cases are configured; executed the supplied stdin.", result });
       }
       const results = [];
       for (const test of tests) {
-        const result = normalizeResult(await executeCode({ language: "cpp", sourceCode: body.code, stdin: test.input, timeoutSeconds: 2 }));
+        const result = normalizeResult(await executeCode({ language: "cpp", sourceCode: body.code, stdin: normalizeStdin(test.input), timeoutSeconds: 2 }));
         results.push({
           passed: result.statusId === 3 && normalizeOutput(result.stdout) === normalizeOutput(test.expectedOutput),
           input: test.input,
@@ -40,7 +40,7 @@ export async function POST(request) {
       }
       return Response.json({ success: true, results, result: results[0]?.result || null });
     }
-    const result = await executeCode({ language: body.language, sourceCode: body.code, stdin: typeof body.stdin === "string" ? body.stdin : "" });
+    const result = await executeCode({ language: body.language, sourceCode: body.code, stdin: normalizeStdin(typeof body.stdin === "string" ? body.stdin : "") });
     return Response.json({ success: true, result: normalizeResult(result) });
   } catch (error) {
     console.error("Code execution failed:", error);

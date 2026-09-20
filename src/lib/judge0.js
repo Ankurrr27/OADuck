@@ -36,6 +36,18 @@ export function prepareSource(language, source) {
   return source;
 }
 
+// LeetCode examples often store string inputs as `"abc"`, while stdin-based
+// solutions expect the raw value (`abc`). Keep the displayed testcase intact,
+// but remove one matching pair of wrapping quotes before execution.
+export function normalizeStdin(value) {
+  const input = String(value ?? "");
+  const trimmed = input.trim();
+  if (trimmed.length >= 2 && ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'")))) {
+    return trimmed.slice(1, -1);
+  }
+  return input;
+}
+
 export async function executeCode({ language, sourceCode, stdin = "", timeoutSeconds = 5 }) {
   const languageId = getLanguageId(language);
   if (!languageId) throw new Error(`Unsupported language: ${language}`);
