@@ -40,6 +40,8 @@ model Question {
   constraints    Json?
   source         String?  @default("leetcode")
   sourceUrl      String?
+  expectedTC     String?  @map("expected_tc")
+  expectedSC     String?  @map("expected_sc")
   leetcodeSlug   String?
   leetcodeId     String?
 
@@ -83,6 +85,13 @@ model TestCase {
   expectedOutput String       @default("") @map("expected_output") @db.Text
   question       Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
   submissions    Submission[]
+  id          String       @id @default(uuid()) @db.Uuid
+  questionId  String       @map("question_id") @db.Uuid
+  input       String       @db.Text
+  output      String       @db.Text
+  isHidden    Boolean      @default(false) @map("is_hidden")
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  submissions Submission[]
 
   @@map("test_case")
 }
@@ -115,6 +124,7 @@ model Hint {
   id           String            @id @default(uuid()) @db.Uuid
   questionId   String            @map("question_id") @db.Uuid
   hintOrder    Int               @map("hint_order")
+  content      String?           @db.Text
   question     Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
   sessionViews SessionHintView[]
 

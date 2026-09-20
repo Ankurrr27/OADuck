@@ -303,6 +303,7 @@ export default function SolveQuestionPage() {
             </div>
             
             <div className="problem-meta">
+              {question.createdBy && <span className="topic-badge">Added by {question.createdBy.name || question.createdBy.email}</span>}
               <span className="difficulty-badge" style={{ background: `${difficultyColor[question.difficulty]}18`, color: difficultyColor[question.difficulty] }}>
                 {question.difficulty}
               </span>
@@ -357,6 +358,34 @@ export default function SolveQuestionPage() {
                     </div>
                   ))}
                 </div>
+            {(question.expectedTC || question.expectedSC) && (
+              <div className="problem-section problem-section--last">
+                <h2>Expected complexity</h2>
+                {question.expectedTC && <p>Time: <strong>{question.expectedTC}</strong></p>}
+                {question.expectedSC && <p>Space: <strong>{question.expectedSC}</strong></p>}
+              </div>
+            )}
+
+            {question.hints?.length > 0 && (
+              <div className="problem-section problem-section--last">
+                <h2>Hints</h2>
+                <ol className="constraints-list">
+                  {question.hints.map((hint) => <li key={hint.id}>{hint.content || `Hint ${hint.hintOrder}`}</li>)}
+                </ol>
+              </div>
+            )}
+
+            {question.testCases?.length > 0 && (
+              <div className="problem-section problem-section--last">
+                <h2>Visible test cases</h2>
+                <ul className="constraints-list">
+                  {question.testCases.map((testCase, index) => (
+                    <li key={testCase.id}>
+                      <strong>Test case {index + 1}</strong>
+                      <pre className="example-card">Input: {testCase.input}{"\n"}Output: {testCase.output}</pre>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </section>
