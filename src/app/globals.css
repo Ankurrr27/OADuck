@@ -217,6 +217,13 @@ main > div > section > p:first-child[class*="uppercase"] {
 .editor-button--submit { border: 1px solid #207466; background: #167766; color: #fff; }
 .editor-button--submit:hover { background: #208a76; }
 .monaco-shell { min-height: 0; flex: 1; }
+.editor-console { display: grid; grid-template-columns: minmax(150px, .55fr) minmax(220px, 1fr); gap: .75rem; border-top: 1px solid #373737; background: #252526; padding: .65rem .9rem; color: #bdbdbd; font-family: var(--font-geist-mono), monospace; font-size: .68rem; }
+.editor-console label { display: grid; gap: .35rem; }
+.editor-console textarea { width: 100%; resize: vertical; border: 1px solid #444; border-radius: 4px; outline: 0; background: #1e1e1e; padding: .45rem; color: #ddd; font: inherit; }
+.editor-console textarea:focus { border-color: #6ca895; }
+.editor-output { min-width: 0; }
+.editor-output > span { display: block; margin-bottom: .35rem; }
+.editor-output pre { overflow: auto; height: 3.25rem; margin: 0; border: 1px solid #444; border-radius: 4px; background: #1e1e1e; padding: .45rem; color: #d7e7dc; white-space: pre-wrap; }
 .editor-loading { display: grid; height: 100%; place-items: center; color: #9d9d9d; font-family: var(--font-geist-mono), monospace; font-size: .85rem; }
 .editor-statusbar { display: flex; min-height: 28px; align-items: center; justify-content: space-between; gap: 1rem; background: #176a5a; padding: 0 .9rem; color: #e8f5f0; font-family: var(--font-geist-mono), monospace; font-size: .68rem; }
 .editor-statusbar__controls { display: flex; align-items: center; gap: .85rem; }
@@ -384,4 +391,5 @@ main > div > section > p:first-child[class*="uppercase"] {
   .solve-workspace { display: flex; height: 100%; min-height: 0; flex-direction: column; overflow: hidden; }
   .problem-panel { height: auto; min-height: 0; flex: 1 1 48%; overflow-y: scroll; border-right: 0; border-bottom: 1px solid #dbe2dd; }
   .editor-panel { min-height: 0; flex: 1 1 52%; }
+  .editor-console { grid-template-columns: 1fr; }
 }

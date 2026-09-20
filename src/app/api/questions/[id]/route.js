@@ -57,6 +57,7 @@ export async function PUT(request, { params }) {
       sourceUrl,
       leetcodeSlug,
       leetcodeId,
+      testCases,
     } = body;
 
     if (!title || !difficulty) {
@@ -68,9 +69,10 @@ export async function PUT(request, { params }) {
       return Response.json({ error: "Question not found" }, { status: 404 });
     }
 
-    const question = await prisma.question.update({
-      where: { id },
-      data: {
+    const question = await prisma.$transaction(async (tx) => {
+      const updated = await tx.question.update({
+        where: { id },
+        data: {
         title,
         description,
         difficulty,
@@ -81,7 +83,22 @@ export async function PUT(request, { params }) {
         sourceUrl,
         leetcodeSlug,
         leetcodeId,
-      },
+        },
+      });
+
+      if (Array.isArray(testCases)) {
+        await tx.testCase.deleteMany({ where: { questionId: id } });
+        const validCases = testCases
+          .filter((testCase) => testCase && typeof testCase.input === "string" && typeof testCase.expectedOutput === "string")
+          .map((testCase) => ({
+            questionId: id,
+            input: testCase.input,
+            expectedOutput: testCase.expectedOutput,
+            isSample: Boolean(testCase.isSample),
+          }));
+        if (validCases.length) await tx.testCase.createMany({ data: validCases });
+      }
+      return updated;
     });
 
     return Response.json({ success: true, question });

@@ -1,0 +1,14 @@
+ALTER TABLE "test_case" ADD COLUMN IF NOT EXISTS "input" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "test_case" ADD COLUMN IF NOT EXISTS "expected_output" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "submission" ADD COLUMN IF NOT EXISTS "user_id" UUID;
+ALTER TABLE "submission" ADD COLUMN IF NOT EXISTS "question_id" UUID;
+ALTER TABLE "submission" ADD COLUMN IF NOT EXISTS "source_code" TEXT;
+ALTER TABLE "submission" ADD COLUMN IF NOT EXISTS "runtime_ms" INTEGER;
+ALTER TABLE "submission" ADD COLUMN IF NOT EXISTS "memory_kb" INTEGER;
+ALTER TABLE "submission" ADD COLUMN IF NOT EXISTS "passed_tests" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "submission" ADD COLUMN IF NOT EXISTS "total_tests" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "submission" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+CREATE INDEX IF NOT EXISTS "submission_user_id_idx" ON "submission"("user_id");
+CREATE INDEX IF NOT EXISTS "submission_question_id_idx" ON "submission"("question_id");
+DO $$ BEGIN ALTER TABLE "submission" ADD CONSTRAINT "submission_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "submission" ADD CONSTRAINT "submission_question_id_fkey" FOREIGN KEY ("question_id") REFERENCES "question"("id") ON DELETE CASCADE ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;

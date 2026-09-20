@@ -52,11 +52,57 @@ export default function SolveQuestionPage() {
   const [question, setQuestion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [language, setLanguage] = useState("javascript");
+  const [language, setLanguage] = useState("cpp");
   const [codeByLanguage, setCodeByLanguage] = useState(() => Object.fromEntries(
     Object.entries(languages).map(([key, value]) => [key, value.boilerplate])
   ));
   const [editorMessage, setEditorMessage] = useState("");
+  const [stdin, setStdin] = useState("");
+  const [output, setOutput] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function runCode() {
+    setIsRunning(true);
+    setEditorMessage("Running…");
+    setOutput("");
+    try {
+      const response = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ problemId: id, language, code: codeByLanguage[language], stdin }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to run code.");
+      const result = data.result;
+      if (data.results) {
+        setOutput(data.results.map((item, index) => `Sample ${index + 1}: ${item.passed ? "Passed" : item.result.verdict}\n${item.result.stdout || item.result.stderr || item.result.compileOutput || "No output."}`).join("\n\n"));
+        setEditorMessage(`${data.results.filter((item) => item.passed).length}/${data.results.length} samples passed`);
+      } else {
+        setOutput(result.stdout || result.stderr || result.compileOutput || result.message || "No output.");
+        setEditorMessage(result.verdict || result.status);
+      }
+    } catch (runError) {
+      setOutput(runError.message);
+      setEditorMessage("Run failed");
+    } finally {
+      setIsRunning(false);
+    }
+  }
+
+  async function submitCode() {
+    setIsSubmitting(true);
+    setEditorMessage("Submitting sample tests…");
+    setOutput("");
+    try {
+      const response = await fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ problemId: id, language, code: codeByLanguage[language] }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to submit code.");
+      setOutput(`Passed: ${data.passedTests} / ${data.totalTests}\nRuntime: ${data.runtime ? `${Math.round(Number(data.runtime) * 1000)} ms` : "—"}`);
+      setEditorMessage(data.status);
+    } catch (submitError) {
+      setOutput(submitError.message);
+      setEditorMessage("Submission failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     async function fetchQuestion() {
@@ -164,14 +210,14 @@ export default function SolveQuestionPage() {
                 <label className="language-selector language-selector--toolbar" htmlFor="solution-language">
                   <span className="sr-only">Solution language</span>
                   <select id="solution-language" value={language} onChange={(event) => setLanguage(event.target.value)}>
-                    {Object.entries(languages).map(([key, item]) => <option value={key} key={key}>{item.label}</option>)}
+                    {Object.entries(languages).filter(([key]) => key === "cpp").map(([key, item]) => <option value={key} key={key}>{item.label}</option>)}
                   </select>
                 </label>
               </div>
               <div className="editor-actions">
                 <button className="editor-button editor-button--quiet" onClick={() => setEditorMessage("Code saved locally for this session.")}>Save</button>
-                <button className="editor-button editor-button--run" onClick={() => setEditorMessage("A code runner will be connected here next.")}>Run</button>
-                <button className="editor-button editor-button--submit" onClick={() => setEditorMessage("A submission service will be connected here next.")}>Submit</button>
+                <button className="editor-button editor-button--run" onClick={runCode} disabled={isRunning || isSubmitting}>{isRunning ? "Running…" : "Run"}</button>
+                <button className="editor-button editor-button--submit" onClick={submitCode} disabled={isRunning || isSubmitting}>{isSubmitting ? "Submitting…" : "Submit"}</button>
               </div>
             </header>
             <div className="monaco-shell">
@@ -195,6 +241,10 @@ export default function SolveQuestionPage() {
                 wordWrap: "on",
               }}
               />
+            </div>
+            <div className="editor-console">
+              <label htmlFor="code-stdin">Input <textarea id="code-stdin" value={stdin} onChange={(event) => setStdin(event.target.value)} placeholder="Optional stdin for Run" rows={2} /></label>
+              <div className="editor-output" aria-live="polite"><span>Output</span><pre>{output || "Run your code to see output here."}</pre></div>
             </div>
             <footer className="editor-statusbar">
               <span>{editorMessage || "Ready"}</span>
