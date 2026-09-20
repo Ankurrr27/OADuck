@@ -3,6 +3,28 @@ export const runtime = "nodejs";
 import { auth } from "../../../auth";
 import prisma from "../../../lib/prisma";
 
+const VALID_SOURCES = new Set(["leetcode", "gfg", "admin"]);
+
+function validateQuestionPayload(body) {
+  const source = body.source || "admin";
+  if (!VALID_SOURCES.has(source)) {
+    return "Source must be leetcode, gfg, or admin";
+  }
+  if ((source === "leetcode" || source === "gfg") && !body.sourceUrl?.trim()) {
+    return "A source URL is required for LeetCode and GFG questions";
+  }
+  if (!body.title?.trim() || !body.difficulty?.trim()) {
+    return "Title and difficulty are required";
+  }
+  if (Array.isArray(body.hints) && body.hints.filter((hint) => hint?.content?.trim()).length > 2) {
+    return "A question can have at most two hints";
+  }
+  if (Array.isArray(body.testCases) && body.testCases.some((testCase) => !String(testCase?.input || "").trim() || !String(testCase?.output || "").trim())) {
+    return "Every test case needs both input and output";
+  }
+  return null;
+}
+
 export async function GET() {
   try {
     const questions = await prisma.question.findMany({
@@ -16,6 +38,9 @@ export async function GET() {
         source: true,
         sourceUrl: true,
         leetcodeSlug: true,
+        expectedTC: true,
+        expectedSC: true,
+        createdBy: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -47,10 +72,16 @@ export async function POST(request) {
       sourceUrl,
       leetcodeSlug,
       leetcodeId,
+      expectedTC,
+      expectedSC,
+      hints,
+      testCases,
+      optimalSolutions,
     } = body;
 
-    if (!title || !difficulty) {
-      return Response.json({ error: "Title and difficulty are required" }, { status: 400 });
+    const validationError = validateQuestionPayload(body);
+    if (validationError) {
+      return Response.json({ error: validationError }, { status: 400 });
     }
 
     // Find the current user ID to set as creator
@@ -63,33 +94,49 @@ export async function POST(request) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Compute the next question number
-    const lastQuestion = await prisma.question.findFirst({
-      orderBy: { questionNumber: "desc" },
-      select: { questionNumber: true },
-    });
-    const nextNumber = (lastQuestion?.questionNumber ?? 0) + 1;
-
     const question = await prisma.question.create({
       data: {
-        questionNumber: nextNumber,
         title,
         description,
         difficulty,
         topics: topics || [],
         examples: examples || [],
         constraints: constraints || [],
-        source: source || "internal",
-        sourceUrl,
+        source,
+        sourceUrl: sourceUrl?.trim() || null,
+        expectedTC: expectedTC?.trim() || null,
+        expectedSC: expectedSC?.trim() || null,
         leetcodeSlug,
         leetcodeId,
         createdById: dbUser.id,
+        hints: Array.isArray(hints) ? {
+          create: hints.filter((hint) => hint?.content?.trim()).map((hint, index) => ({
+            hintOrder: index + 1,
+            content: hint.content.trim(),
+          })),
+        } : undefined,
+        testCases: Array.isArray(testCases) ? {
+          create: testCases.map((testCase) => ({
+            input: String(testCase?.input || "").trim(),
+            output: String(testCase?.output || "").trim(),
+            isHidden: Boolean(testCase?.isHidden),
+          })),
+        } : undefined,
+        optimalSolutions: Array.isArray(optimalSolutions) ? {
+          create: optimalSolutions.filter((solution) => solution?.language?.trim() && solution?.code?.trim()).map((solution) => ({
+            language: solution.language.trim(),
+            code: solution.code.trim(),
+          })),
+        } : undefined,
       },
     });
 
     return Response.json({ success: true, question });
   } catch (error) {
     console.error("Error creating question:", error);
-    return Response.json({ success: false, error: "Failed to create question" }, { status: 500 });
+    return Response.json({
+      success: false,
+      error: process.env.NODE_ENV === "development" ? error.message : "Failed to create question",
+    }, { status: 500 });
   }
 }

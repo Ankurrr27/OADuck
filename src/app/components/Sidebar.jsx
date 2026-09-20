@@ -95,6 +95,10 @@ export default function Sidebar() {
                 <LibraryIcon />
                 <span>Manage Questions</span>
               </Link>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/sheets" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/sheets" title="Manage sheets" onClick={() => setSidebarOpen(false)}>
+                <LibraryIcon />
+                <span>Manage Sheets</span>
+              </Link>
               <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/questions/new" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/questions/new" title="Add question" onClick={() => setSidebarOpen(false)}>
                 <AddIcon />
                 <span>Add Question</span>
