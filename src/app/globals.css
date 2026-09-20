@@ -3,12 +3,98 @@
 @theme inline {
   --color-background: #f5f4ef;
   --color-foreground: #17221e;
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-manrope);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  font-family: var(--font-geist-sans), sans-serif;
+  min-height: 100vh;
+  overflow-x: clip;
+  background: #f5f4ef;
+  font-family: var(--font-manrope), sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+* { -webkit-tap-highlight-color: transparent; }
+
+:focus-visible { outline: 2px solid #f5c75d; outline-offset: 3px; }
+
+h1, h2, h3, h4, h5, h6,
+.app-brand {
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-weight: 650;
+}
+
+/* Shared workspace navigation: clear hierarchy without adding visual noise. */
+.app-header {
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  background: linear-gradient(105deg, #101b18 0%, #123f36 58%, #164f44 100%) !important;
+  box-shadow: 0 8px 24px rgba(15, 35, 29, .16);
+}
+
+.app-brand { text-decoration: none; }
+.app-brand img { filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .22)); }
+
+.app-profile-menu {
+  border: 1px solid transparent;
+  border-radius: .85rem;
+}
+
+.app-profile-menu:hover {
+  border-color: rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .08);
+  opacity: 1;
+}
+
+@media (min-width: 768px) {
+  .app-sidebar {
+    border-right-color: #dce5df !important;
+    background: linear-gradient(180deg, #fbfcf9 0%, #f3f7f3 100%) !important;
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, .75), 8px 0 24px rgba(22, 56, 45, .035);
+    padding: 1rem !important;
+  }
+
+  .app-sidebar > p {
+    margin: .35rem .25rem .7rem !important;
+    color: #829087 !important;
+    letter-spacing: .16em !important;
+  }
+
+  .app-nav { gap: .35rem !important; }
+
+  .app-nav > a {
+    min-height: 2.85rem !important;
+    border: 1px solid transparent;
+    border-radius: .75rem !important;
+    color: #68766e !important;
+    transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease !important;
+  }
+
+  .app-nav > a:hover {
+    border-color: #dce7df;
+    background: rgba(255, 255, 255, .8) !important;
+    box-shadow: 0 5px 12px rgba(23, 61, 49, .055);
+    color: #164c40 !important;
+    transform: translateX(3px);
+  }
+
+  .app-nav > a[class*="bg-[#e8f1eb]"] {
+    border-color: #cfe0d5;
+    background: linear-gradient(100deg, #dfeee4, #eff6f1) !important;
+    box-shadow: inset 3px 0 0 #f5c75d, 0 5px 12px rgba(22, 82, 65, .08) !important;
+    color: #123f36 !important;
+  }
+
+  .app-sidebar > button[type="button"]:not([aria-label="Resize sidebar"]) {
+    border-radius: .75rem;
+  }
 }
 
 .page-hero {
@@ -30,26 +116,42 @@ main > div > section > p:first-child[class*="uppercase"] {
 .duck-loader--large .duck-loader__scene { width: 180px; height: 232px; }
 .duck-loader--large .duck-loader__label { font-size: 1rem; }
 
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: #f5f4ef;
+}
+
 .navigation-duck {
   position: fixed;
+  inset: 0;
   z-index: 25;
-  right: 1.25rem;
-  bottom: 1.25rem;
   display: grid;
-  width: 92px;
-  height: 116px;
   place-items: center;
-  border: 1px solid rgba(214, 225, 217, .9);
-  border-radius: .5rem;
-  background: rgba(255, 254, 250, .94);
-  box-shadow: 0 12px 30px rgba(23, 34, 30, .15);
-  animation: navigation-duck-in .16s ease-out;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: #f5f4ef;
+  box-shadow: none;
+  animation: navigation-duck-in .22s ease-out;
+  transition: opacity .18s ease, transform .18s ease;
   pointer-events: none;
 }
 
+.navigation-duck--leaving { opacity: 0; transform: translateY(-4px); }
+
 @keyframes navigation-duck-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
 
 .solve-shell {
@@ -132,20 +234,22 @@ main > div > section > p:first-child[class*="uppercase"] {
 @media (max-width: 720px) {
   body { font-size: 14px; }
 
+  /* Keep the mobile app bar edge-to-edge; no light seam at its corners. */
+  .app-header {
+    border-bottom-color: transparent;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .app-sidebar {
+    border-top: 0;
+    border-left: 0;
+    border-bottom: 0;
+  }
+
   /* Keep loading states visual and minimal on phones. */
   .duck-loader__label { display: none; }
   .duck-loader { gap: 0; }
-
-  .navigation-duck {
-    inset: 0;
-    z-index: 25;
-    width: auto;
-    height: auto;
-    border: 0;
-    border-radius: 0;
-    background: rgba(245, 244, 239, .55);
-    box-shadow: none;
-  }
 
   main > div > section {
     padding-top: 0 !important;

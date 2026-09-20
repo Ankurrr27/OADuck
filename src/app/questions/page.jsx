@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Sidebar from "../components/Sidebar";
 import AppHeader from "../components/AppHeader";
+import PageLoader from "../components/PageLoader";
 
 const difficultyColor = { Easy: "#22c55e", Medium: "#f59e0b", Hard: "#ef4444" };
 
@@ -62,7 +63,7 @@ export default function QuestionsPage() {
 
           <div className="mt-5 overflow-hidden rounded-2xl border border-[#dfe1da] bg-[#fffefa] shadow-sm">
             {loading ? (
-              <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-[#6f7771]"><span className="grid h-10 w-10 place-items-center rounded-full border-2 border-[#d8e3db] border-t-[#176a5a] text-xs animate-spin">◌</span><span className="text-sm font-medium">Gathering questions…</span></div>
+              <PageLoader />
             ) : filtered.length === 0 ? (
               <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-[#e8f1eb] text-2xl">⌕</span><h2 className="mt-4 text-lg font-semibold">Nothing here yet</h2><p className="mt-2 max-w-sm text-sm leading-6 text-[#6f7771]">Try another difficulty or import a problem to begin building your library.</p></div>
             ) : (

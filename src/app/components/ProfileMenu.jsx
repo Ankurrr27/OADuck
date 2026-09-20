@@ -12,7 +12,7 @@ export default function ProfileMenu() {
   const profileUrl = displayUsername ? `/profile/${displayUsername}` : "/profile";
 
   return (
-    <Link className="flex items-center gap-2 p-1 no-underline transition hover:opacity-80 sm:gap-2.5 sm:pr-2" href={profileUrl} aria-label="Open profile">
+    <Link className="app-profile-menu flex items-center gap-2 p-1 no-underline transition hover:opacity-80 sm:gap-2.5 sm:pr-2" href={profileUrl} aria-label="Open profile">
       {user.image ? (
         <img className="h-9.5 w-9.5 rounded-full object-cover" src={user.image} alt="" />
       ) : (

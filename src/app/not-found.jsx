@@ -10,7 +10,7 @@ export default function NotFound() {
       <div className="flex min-h-[calc(100vh-72px)]">
         <Sidebar />
         <section className="flex w-full flex-1 items-center justify-center px-6 py-12">
-          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-[#dfe1da] bg-[#fffefa] px-6 py-12 text-center shadow-sm sm:px-12 sm:py-16">
+          <div className="relative w-full max-w-2xl px-6 py-12 text-center sm:px-12 sm:py-16">
             <div className="absolute left-1/2 top-0 h-44 w-44 -translate-x-1/2 rounded-full bg-[#e8f1eb] blur-3xl" aria-hidden="true" />
             <div className="relative mx-auto w-fit rounded-2xl bg-[#f6f8f4] px-5 py-3"><DuckLoader label="" /></div>
             <p className="relative mt-7 text-xs font-bold uppercase tracking-[.14em] text-[#a07725]">404 · Lost in the reeds</p>

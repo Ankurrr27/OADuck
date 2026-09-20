@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import AppHeader from "../../../../components/AppHeader";
 import Sidebar from "../../../../components/Sidebar";
+import PageLoader from "../../../../components/PageLoader";
 
 export default function EditQuestionPage() {
   const router = useRouter();
@@ -182,20 +183,7 @@ export default function EditQuestionPage() {
   }
 
   if (pageLoading) {
-    return (
-      <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
-        <AppHeader />
-        <div className="flex min-h-[calc(100vh-60px)] ">
-          <Sidebar />
-          <section className="w-full max-w-[900px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19 max-w-[1120px]" style={{ maxWidth: "800px" }}>
-            <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]">
-              <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]-spinner" />
-              <span>Loading question...</span>
-            </div>
-          </section>
-        </div>
-      </main>
-    );
+    return <PageLoader />;
   }
 
   if (loadError) {

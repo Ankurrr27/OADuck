@@ -7,7 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 
 export default function Sidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(220);
+  const [sidebarWidth, setSidebarWidth] = useState(200);
   const pathname = usePathname();
   const { data: session } = useSession();
   const [viewRole, setViewRole] = useState("ADMIN");
@@ -67,7 +67,7 @@ export default function Sidebar() {
         onClick={() => setSidebarOpen(false)}
       />
       <aside
-        className={`app-sidebar fixed left-0 top-14 z-20 flex h-[calc(100dvh-3.5rem)] w-[min(300px,86vw)] flex-col overflow-y-auto border-r border-[#dfe1da] bg-[#fbfcf9] p-3 shadow-[16px_0_40px_rgba(23,34,30,.18)] transition-transform duration-300 ease-out md:relative md:inset-y-auto md:left-auto md:h-auto md:min-h-[calc(100vh-72px)] md:w-[var(--sidebar-width)] md:flex md:flex-col md:overflow-visible md:p-3 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
+        className={`app-sidebar fixed left-0 top-14 z-20 flex h-[calc(100dvh-3.5rem)] w-[min(300px,86vw)] flex-col overflow-y-auto border-r border-[#dfe1da] bg-[#fbfcf9] p-3 shadow-[16px_0_40px_rgba(23,34,30,.18)] transition-transform duration-300 ease-out md:sticky md:top-[72px] md:left-auto md:self-start md:h-[calc(100dvh-72px)] md:min-h-0 md:w-[var(--sidebar-width)] md:flex md:flex-col md:overflow-y-auto md:p-3 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
         style={{ "--sidebar-width": `${sidebarWidth}px` }}
       >
         {session?.user?.role === "ADMIN" && (
@@ -80,7 +80,7 @@ export default function Sidebar() {
           </div>
         )}
         <p className="mb-2 hidden px-2 text-[10px] font-bold uppercase tracking-[.14em] text-[#98a19b] md:block">Workspace</p>
-        <nav className="grid gap-1" aria-label="Dashboard tools">
+        <nav className="app-nav grid gap-1" aria-label="Dashboard tools">
           {session?.user?.role === "ADMIN" && viewRole === "ADMIN" ? (
             <>
               <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin" title="Admin dashboard" onClick={() => setSidebarOpen(false)}>
@@ -122,7 +122,7 @@ export default function Sidebar() {
                 <HelpIcon />
                 <span>How to use</span>
               </Link>
-              <Link className={`mt-3 flex min-h-11 items-center gap-3 rounded-lg border-t border-[#e5e9e4] px-3 pt-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:text-[#123f36] ${pathname.startsWith("/profile") ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href={profileUrl} title="Edit profile" onClick={() => setSidebarOpen(false)}>
+              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname.startsWith("/profile") ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href={profileUrl} title="Edit profile" onClick={() => setSidebarOpen(false)}>
                 <ProfileIcon />
                 <span>Profile</span>
               </Link>
@@ -138,7 +138,7 @@ export default function Sidebar() {
           <LogoutIcon />
           <span>Sign out</span>
         </button>
-        <button
+        {/* <button
           className="absolute right-[-5px] top-0 hidden h-full w-2 cursor-col-resize border-0 bg-transparent p-0 md:block"
           type="button"
           onPointerDown={startResize}
@@ -146,7 +146,7 @@ export default function Sidebar() {
           title="Drag to resize sidebar"
         >
           <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-transparent transition-colors hover:bg-[#176a5a]" />
-        </button>
+        </button> */}
       </aside>
     </>
   );

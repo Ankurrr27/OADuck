@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import AppHeader from "../../components/AppHeader";
 import Sidebar from "../../components/Sidebar";
+import PageLoader from "../../components/PageLoader";
 
 const difficultyColor = {
   Easy: "#22c55e",
@@ -91,10 +92,7 @@ export default function AdminQuestionsPage() {
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]">
-              <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]-spinner" />
-              <span>Loading questions...</span>
-            </div>
+            <PageLoader />
           ) : filteredQuestions.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-16 text-center">
               <p>No questions found.</p>

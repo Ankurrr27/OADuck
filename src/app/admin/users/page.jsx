@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import AppHeader from "../../components/AppHeader";
 import Sidebar from "../../components/Sidebar";
+import PageLoader from "../../components/PageLoader";
 import { useSession } from "next-auth/react";
 
 export default function ManageUsersPage() {
@@ -128,10 +129,7 @@ export default function ManageUsersPage() {
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]">
-              <div className="flex flex-col items-center gap-4 py-16 text-[#6f7771]-spinner" />
-              <span>Loading users...</span>
-            </div>
+            <PageLoader />
           ) : error ? (
             <div className="flex flex-col items-center gap-2 py-16 text-center">
               <p style={{ color: "#d32f2f" }}>{error}</p>

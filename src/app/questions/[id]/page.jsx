@@ -6,11 +6,11 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import AppHeader from "../../components/AppHeader";
 import Sidebar from "../../components/Sidebar";
-import DuckLoader from "../../components/DuckLoader";
+import PageLoader from "../../components/PageLoader";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
-  loading: () => <div className="editor-loading">Loading editor…</div>,
+  loading: () => <PageLoader />,
 });
 
 const difficultyColor = {
@@ -82,17 +82,7 @@ export default function SolveQuestionPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
-        <AppHeader />
-        <div className="flex min-h-[calc(100vh-60px)] ">
-          <Sidebar />
-          <section className="w-full max-w-[1200px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <DuckLoader large label="Opening your problem…" />
-          </section>
-        </div>
-      </main>
-    );
+    return <PageLoader />;
   }
 
   if (error || !question) {
