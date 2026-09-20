@@ -11,7 +11,6 @@ export async function GET(request, { params }) {
     const session = await auth();
     const canViewHiddenTests = session?.user?.role === "ADMIN";
 
-    const session = await auth();
     const isAdmin = session?.user?.role === "ADMIN";
     const question = await prisma.question.findUnique({
       where: { id },
@@ -36,11 +35,6 @@ export async function GET(request, { params }) {
         expectedTC: true,
         expectedSC: true,
         hints: { orderBy: { hintOrder: "asc" }, select: { id: true, hintOrder: true, content: true } },
-        testCases: {
-          where: isAdmin ? undefined : { isHidden: false },
-          orderBy: { id: "asc" },
-          select: { id: true, input: true, output: true, isHidden: true },
-        },
         createdBy: { select: { id: true, name: true, email: true } },
         ...(isAdmin ? { optimalSolutions: { orderBy: { language: "asc" }, select: { id: true, language: true, code: true } } } : {}),
       },
@@ -82,7 +76,6 @@ export async function PUT(request, { params }) {
       expectedTC,
       expectedSC,
       hints,
-      testCases,
       optimalSolutions,
     } = body;
 
@@ -99,7 +92,7 @@ export async function PUT(request, { params }) {
     if (Array.isArray(hints) && hints.filter((hint) => hint?.content?.trim()).length > 2) {
       return Response.json({ error: "A question can have at most two hints" }, { status: 400 });
     }
-    if (Array.isArray(testCases) && testCases.some((testCase) => !String(testCase?.input || "").trim() || !String(testCase?.output || "").trim())) {
+    if (Array.isArray(testCases) && testCases.some((testCase) => !String(testCase?.input || "").trim() || !String(testCase?.expectedOutput || "").trim())) {
       return Response.json({ error: "Every test case needs both input and output" }, { status: 400 });
     }
 
@@ -139,44 +132,17 @@ export async function PUT(request, { params }) {
           }));
         if (validCases.length) await tx.testCase.createMany({ data: validCases });
       }
+      if (Array.isArray(hints)) {
+        await tx.hint.deleteMany({ where: { questionId: id } });
+        const validHints = hints.filter((hint) => hint?.content?.trim()).map((hint, index) => ({ questionId: id, hintOrder: index + 1, content: hint.content.trim() }));
+        if (validHints.length) await tx.hint.createMany({ data: validHints });
+      }
+      if (Array.isArray(optimalSolutions)) {
+        await tx.optimalSolution.deleteMany({ where: { questionId: id } });
+        const validSolutions = optimalSolutions.filter((solution) => solution?.language?.trim() && solution?.code?.trim()).map((solution) => ({ questionId: id, language: solution.language.trim(), code: solution.code.trim() }));
+        if (validSolutions.length) await tx.optimalSolution.createMany({ data: validSolutions });
+      }
       return updated;
-        ...(Array.isArray(hints) ? {
-          hints: {
-            deleteMany: {},
-            create: hints.filter((hint) => hint?.content?.trim()).map((hint, index) => ({
-              hintOrder: index + 1,
-              content: hint.content.trim(),
-            })),
-          },
-        } : {}),
-        ...(Array.isArray(testCases) ? {
-          testCases: {
-            deleteMany: { id: { notIn: testCases.filter((testCase) => testCase?.id).map((testCase) => testCase.id) } },
-            update: testCases.filter((testCase) => testCase?.id).map((testCase) => ({
-              where: { id: testCase.id },
-              data: {
-                input: String(testCase.input || "").trim(),
-                output: String(testCase.output || "").trim(),
-                isHidden: Boolean(testCase.isHidden),
-              },
-            })),
-            create: testCases.filter((testCase) => !testCase?.id).map((testCase) => ({
-              input: String(testCase.input || "").trim(),
-              output: String(testCase.output || "").trim(),
-              isHidden: Boolean(testCase.isHidden),
-            })),
-          },
-        } : {}),
-        ...(Array.isArray(optimalSolutions) ? {
-          optimalSolutions: {
-            deleteMany: {},
-            create: optimalSolutions.filter((solution) => solution?.language?.trim() && solution?.code?.trim()).map((solution) => ({
-              language: solution.language.trim(),
-              code: solution.code.trim(),
-            })),
-          },
-        } : {}),
-      },
     });
 
     return Response.json({ success: true, question });

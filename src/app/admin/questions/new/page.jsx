@@ -22,54 +22,14 @@ export default function NewQuestionPage() {
   const [expectedSC, setExpectedSC] = useState("");
   const [source, setSource] = useState("admin");
   const [hints, setHints] = useState("");
+  const [leetcodeSlug, setLeetcodeSlug] = useState("");
+  const [leetcodeId, setLeetcodeId] = useState("");
   
   const [sourceUrl, setSourceUrl] = useState("");
-  const [testCases, setTestCases] = useState([]);
   const [optimalSolutions, setOptimalSolutions] = useState([{ language: "JavaScript", code: "" }]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-
-  async function handleImport(e) {
-    e.preventDefault();
-    if (!importUrl) {
-      setImportError("Please enter a valid LeetCode problem URL.");
-      return;
-    }
-
-    setIsImporting(true);
-    setImportError("");
-    setImportSuccess(false);
-
-    try {
-      const response = await fetch(`/api/leetcode/problem?url=${encodeURIComponent(importUrl)}`);
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        setImportError(data.error || "Failed to import problem.");
-        return;
-      }
-
-      const problem = data.problem;
-      
-      setTitle(problem.title || "");
-      setDifficulty(problem.difficulty || "Easy");
-      setDescription(problem.description || "");
-      setTopics(problem.topics ? problem.topics.join(", ") : "");
-      setExamples(problem.examples || []);
-      setConstraints(problem.constraints || []);
-      setTestCases(parseLeetCodeExamples(problem.description || ""));
-      setLeetcodeSlug(problem.slug || "");
-      setLeetcodeId(problem.questionId || "");
-      setSourceUrl(problem.url || importUrl);
-
-      setImportSuccess(true);
-    } catch (err) {
-      setImportError("An error occurred while communicating with the server.");
-    } finally {
-      setIsImporting(false);
-    }
-  }
 
   async function handleSave(e) {
     e.preventDefault();
@@ -97,7 +57,6 @@ export default function NewQuestionPage() {
         sourceUrl,
         leetcodeSlug,
         leetcodeId,
-        testCases,
         testCases,
         optimalSolutions,
       };
@@ -215,22 +174,6 @@ export default function NewQuestionPage() {
                 </div>
               ))}
               <button type="button" onClick={() => setOptimalSolutions((current) => [...current, { language: "", code: "" }])} className="inline-flex min-h-9 w-fit items-center justify-center rounded-md border border-[#d7dad3] px-3 py-2 text-xs font-semibold text-[#123f36]">+ Add solution</button>
-            </fieldset>
-
-            <fieldset style={{ display: "grid", gap: "0.75rem", border: "1px solid var(--line)", padding: "1rem" }}>
-              <legend>Test cases</legend>
-              {testCases.map((testCase, index) => (
-                <div key={index} style={{ display: "grid", gap: "0.6rem", borderBottom: "1px solid var(--line)", paddingBottom: "0.75rem" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <strong>Test case {index + 1}</strong>
-                    <button type="button" onClick={() => setTestCases((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Remove test case ${index + 1}`} title="Remove test case" style={{ display: "grid", placeItems: "center", width: "2rem", height: "2rem", border: "1px solid #d7dad3", borderRadius: "0.375rem", background: "transparent", color: "#b33a32", cursor: "pointer", fontSize: "1.25rem", lineHeight: 1 }}>×</button>
-                  </div>
-                  <textarea value={testCase.input} onChange={(event) => setTestCases((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, input: event.target.value } : item))} rows={3} placeholder="Input" required />
-                  <textarea value={testCase.output} onChange={(event) => setTestCases((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, output: event.target.value } : item))} rows={3} placeholder="Expected output" required />
-                  <label style={{ display: "flex", gridTemplateColumns: "none", flexDirection: "row", gap: "0.4rem" }}>Visibility<select value={testCase.isHidden ? "hidden" : "shown"} onChange={(event) => setTestCases((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, isHidden: event.target.value === "hidden" } : item))}><option value="shown">Shown</option><option value="hidden">Hidden</option></select></label>
-                </div>
-              ))}
-              <button type="button" onClick={() => setTestCases((current) => [...current, { input: "", output: "", isHidden: true }])} className="inline-flex min-h-9 w-fit items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-2 text-xs font-semibold text-[#123f36]">+ Add test case</button>
             </fieldset>
 
             {examples.length > 0 && (

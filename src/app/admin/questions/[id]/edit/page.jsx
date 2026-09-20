@@ -25,7 +25,6 @@ export default function EditQuestionPage() {
   const [constraints, setConstraints] = useState([]);
   const [examplesText, setExamplesText] = useState("[]");
   const [constraintsText, setConstraintsText] = useState("[]");
-  const [testCases, setTestCases] = useState([]);
   const [expectedTC, setExpectedTC] = useState("");
   const [expectedSC, setExpectedSC] = useState("");
   const [hints, setHints] = useState([]);
@@ -36,6 +35,8 @@ export default function EditQuestionPage() {
   // Meta state
   const [sourceUrl, setSourceUrl] = useState("");
   const [source, setSource] = useState("");
+  const [leetcodeSlug, setLeetcodeSlug] = useState("");
+  const [leetcodeId, setLeetcodeId] = useState("");
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -65,7 +66,6 @@ export default function EditQuestionPage() {
         setConstraints(q.constraints || []);
         setExamplesText(JSON.stringify(q.examples || [], null, 2));
         setConstraintsText(JSON.stringify(q.constraints || [], null, 2));
-      setTestCases(q.testCases || []);
         setExpectedTC(q.expectedTC || "");
         setExpectedSC(q.expectedSC || "");
         setHints(q.hints || []);
@@ -74,6 +74,8 @@ export default function EditQuestionPage() {
         setQuestionNumber(q.questionNumber);
         setSourceUrl(q.sourceUrl || "");
         setSource(q.source || "");
+        setLeetcodeSlug(q.leetcodeSlug || "");
+        setLeetcodeId(q.leetcodeId || "");
       } catch (err) {
         setLoadError("Failed to load question.");
       } finally {
@@ -82,48 +84,6 @@ export default function EditQuestionPage() {
     }
     if (id) fetchQuestion();
   }, [id]);
-
-  async function handleImport(e) {
-    e.preventDefault();
-    if (!importUrl) {
-      setImportError("Please enter a valid LeetCode problem URL.");
-      return;
-    }
-
-    setIsImporting(true);
-    setImportError("");
-    setImportSuccess(false);
-
-    try {
-      const response = await fetch(`/api/leetcode/problem?url=${encodeURIComponent(importUrl)}`);
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        setImportError(data.error || "Failed to import problem.");
-        return;
-      }
-
-      const problem = data.problem;
-      setTitle(problem.title || "");
-      setDifficulty(problem.difficulty || "Easy");
-      setDescription(problem.description || "");
-      setTopics(problem.topics ? problem.topics.join(", ") : "");
-      setExamples(problem.examples || []);
-      setConstraints(problem.constraints || []);
-      setExamplesText(JSON.stringify(problem.examples || [], null, 2));
-      setConstraintsText(JSON.stringify(problem.constraints || [], null, 2));
-      setTestCases(parseLeetCodeExamples(problem.description || description));
-      setLeetcodeSlug(problem.slug || "");
-      setLeetcodeId(problem.questionId || "");
-      setSourceUrl(problem.url || importUrl);
-
-      setImportSuccess(true);
-    } catch (err) {
-      setImportError("An error occurred while communicating with the server.");
-    } finally {
-      setIsImporting(false);
-    }
-  }
 
   async function handleSave(e) {
     e.preventDefault();
@@ -157,20 +117,15 @@ export default function EditQuestionPage() {
         topics: topics ? topics.split(",").map(t => t.trim()).filter(Boolean) : [],
         examples: parsedExamples,
         constraints: parsedConstraints,
-        source: source || "leetcode",
+        source: source || "admin",
         sourceUrl,
         leetcodeSlug,
         leetcodeId,
         testCases: testCases.map(({ id, input, expectedOutput, isSample }) => ({ id, input, expectedOutput, isSample })),
-        examples,
-        constraints,
         expectedTC,
         expectedSC,
         hints,
-        testCases,
         optimalSolutions,
-        source: source || "admin",
-        sourceUrl,
       };
 
       const response = await fetch(`/api/questions/${id}`, {
@@ -298,10 +253,6 @@ export default function EditQuestionPage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <label>
-                Source
-                <input value={source} onChange={(e) => setSource(e.target.value)} placeholder="leetcode" />
-              </label>
-              <label>
                 LeetCode slug
                 <input value={leetcodeSlug} onChange={(e) => setLeetcodeSlug(e.target.value)} placeholder="two-sum" />
               </label>
@@ -318,6 +269,7 @@ export default function EditQuestionPage() {
               <div style={{ marginTop: "0.5rem", padding: "1rem", border: "1px solid var(--line)", borderRadius: "8px", maxHeight: "260px", overflowY: "auto", background: "#fff" }}>
                 <strong style={{ display: "block", marginBottom: "0.5rem", fontSize: "12px", color: "var(--muted)" }}>Formatted preview</strong>
                 <div dangerouslySetInnerHTML={{ __html: description || "<span style='color: var(--muted)'>No description</span>" }} />
+              </div>
               Constraints (one per line)
               <textarea value={Array.isArray(constraints) ? constraints.join("\n") : ""} onChange={(e) => setConstraints(e.target.value.split("\n").filter(Boolean))} rows={4} />
             </label>
@@ -337,35 +289,6 @@ export default function EditQuestionPage() {
                 <input value={expectedSC} onChange={(e) => setExpectedSC(e.target.value)} placeholder="O(1)" />
               </label>
             </div>
-
-            {testCases.length > 0 && (
-              <fieldset style={{ display: "grid", gap: "0.75rem", border: "1px solid var(--line)", padding: "1rem" }}>
-                <legend>Test cases</legend>
-                {testCases.map((testCase, index) => (
-                  <div key={testCase.id || index} style={{ display: "grid", gap: "0.6rem", borderBottom: "1px solid var(--line)", paddingBottom: "0.75rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <strong>Test case {index + 1}</strong>
-                      <button type="button" onClick={() => setTestCases((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Remove test case ${index + 1}`} title="Remove test case" style={{ display: "grid", placeItems: "center", width: "2rem", height: "2rem", border: "1px solid #d7dad3", borderRadius: "0.375rem", background: "transparent", color: "#b33a32", cursor: "pointer", fontSize: "1.25rem", lineHeight: 1 }}>×</button>
-                    </div>
-                    <textarea value={testCase.input || ""} onChange={(event) => setTestCases((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, input: event.target.value } : item))} rows={3} placeholder="Input" required />
-                    <textarea value={testCase.output || ""} onChange={(event) => setTestCases((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, output: event.target.value } : item))} rows={3} placeholder="Expected output" required />
-                    <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                      <label style={{ display: "flex", gridTemplateColumns: "none", flexDirection: "row", gap: "0.5rem" }}>Visibility<select value={testCase.isHidden ? "hidden" : "shown"} onChange={(event) => setTestCases((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, isHidden: event.target.value === "hidden" } : item))}><option value="shown">Shown</option><option value="hidden">Hidden</option></select></label>
-                    </div>
-                  </div>
-                ))}
-                <button type="button" onClick={() => setTestCases((current) => [...current, { input: "", output: "", isHidden: true }])} className="inline-flex min-h-9 w-fit items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-2 text-xs font-semibold text-[#123f36]">+ Add test case</button>
-              </fieldset>
-            )}
-
-            {testCases.length === 0 && (
-              <button type="button" onClick={() => setTestCases([{ input: "", output: "", isHidden: true }])} className="inline-flex min-h-9 w-fit items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-2 text-xs font-semibold text-[#123f36]">+ Add test case</button>
-            )}
-
-            <label>
-              Description (HTML or plain text)
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={8} placeholder="Describe the problem..." />
-            </label>
 
             <fieldset style={{ display: "grid", gap: "0.75rem", border: "1px solid var(--line)", padding: "1rem" }}>
               <legend>Optimal solutions</legend>
@@ -388,7 +311,7 @@ export default function EditQuestionPage() {
                   ))}
                 </ul>
               </div>
-            </label>
+            )}
 
             <label>
               Examples (JSON array)

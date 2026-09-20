@@ -19,7 +19,7 @@ function validateQuestionPayload(body) {
   if (Array.isArray(body.hints) && body.hints.filter((hint) => hint?.content?.trim()).length > 2) {
     return "A question can have at most two hints";
   }
-  if (Array.isArray(body.testCases) && body.testCases.some((testCase) => !String(testCase?.input || "").trim() || !String(testCase?.output || "").trim())) {
+  if (Array.isArray(body.testCases) && body.testCases.some((testCase) => !String(testCase?.input || "").trim() || !String(testCase?.expectedOutput || "").trim())) {
     return "Every test case needs both input and output";
   }
   return null;
@@ -76,7 +76,6 @@ export async function POST(request) {
       expectedTC,
       expectedSC,
       hints,
-      testCases,
       optimalSolutions,
     } = body;
 
@@ -110,32 +109,13 @@ export async function POST(request) {
         leetcodeSlug,
         leetcodeId,
         createdById: dbUser.id,
-        ...(Array.isArray(testCases)
-          ? {
-              testCases: {
-                create: testCases
-                  .filter((testCase) => testCase && typeof testCase.input === "string" && typeof testCase.expectedOutput === "string")
-                  .map((testCase) => ({
-                    input: testCase.input,
-                    expectedOutput: testCase.expectedOutput,
-                    isSample: Boolean(testCase.isSample),
-                  })),
-              },
-            }
-          : {}),
         hints: Array.isArray(hints) ? {
           create: hints.filter((hint) => hint?.content?.trim()).map((hint, index) => ({
             hintOrder: index + 1,
             content: hint.content.trim(),
           })),
         } : undefined,
-        testCases: Array.isArray(testCases) ? {
-          create: testCases.map((testCase) => ({
-            input: String(testCase?.input || "").trim(),
-            output: String(testCase?.output || "").trim(),
-            isHidden: Boolean(testCase?.isHidden),
-          })),
-        } : undefined,
+        testCases: Array.isArray(testCases) ? { create: testCases.filter((testCase) => typeof testCase?.input === "string" && typeof testCase?.expectedOutput === "string").map((testCase) => ({ input: testCase.input.trim(), expectedOutput: testCase.expectedOutput.trim(), isSample: Boolean(testCase.isSample) })) } : undefined,
         optimalSolutions: Array.isArray(optimalSolutions) ? {
           create: optimalSolutions.filter((solution) => solution?.language?.trim() && solution?.code?.trim()).map((solution) => ({
             language: solution.language.trim(),
