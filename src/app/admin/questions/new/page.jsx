@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppHeader from "../../../components/AppHeader";
 import Sidebar from "../../../components/Sidebar";
+import { parseLeetCodeExamples } from "@/lib/leetcodeExamples";
 
 export default function NewQuestionPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function NewQuestionPage() {
   const [topics, setTopics] = useState("");
   const [examples, setExamples] = useState([]);
   const [constraints, setConstraints] = useState([]);
+  const [testCases, setTestCases] = useState([]);
   
   // Meta state
   const [leetcodeSlug, setLeetcodeSlug] = useState("");
@@ -59,6 +61,7 @@ export default function NewQuestionPage() {
       setTopics(problem.topics ? problem.topics.join(", ") : "");
       setExamples(problem.examples || []);
       setConstraints(problem.constraints || []);
+      setTestCases(parseLeetCodeExamples(problem.description || ""));
       setLeetcodeSlug(problem.slug || "");
       setLeetcodeId(problem.questionId || "");
       setSourceUrl(problem.url || importUrl);
@@ -94,6 +97,7 @@ export default function NewQuestionPage() {
         sourceUrl,
         leetcodeSlug,
         leetcodeId,
+        testCases,
       };
 
       const response = await fetch("/api/questions", {
@@ -227,6 +231,20 @@ export default function NewQuestionPage() {
                 </ul>
               </div>
             )}
+
+            <div style={{ marginTop: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <strong>Run / Submit test cases</strong>
+                <button type="button" className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#d7dad3] bg-[#fffefa] px-3 py-1 text-xs font-semibold" onClick={() => setTestCases((current) => [...current, { input: "", expectedOutput: "", isSample: true }])}>Add test case</button>
+              </div>
+              {testCases.map((testCase, index) => (
+                <div key={index} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "0.5rem", marginTop: "0.75rem" }}>
+                  <textarea rows={3} placeholder="stdin" value={testCase.input} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, input: e.target.value } : item))} />
+                  <textarea rows={3} placeholder="expected stdout" value={testCase.expectedOutput} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, expectedOutput: e.target.value } : item))} />
+                  <label style={{ display: "flex", gap: "0.3rem", alignItems: "center", fontSize: "12px" }}><input type="checkbox" checked={testCase.isSample} onChange={(e) => setTestCases((current) => current.map((item, i) => i === index ? { ...item, isSample: e.target.checked } : item))} /> Public</label>
+                </div>
+              ))}
+            </div>
 
             <div style={{ marginTop: "2rem", display: "flex", alignItems: "center", gap: "1rem" }}>
               <button 

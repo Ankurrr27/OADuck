@@ -6,6 +6,8 @@ import prisma from "../../../../lib/prisma";
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
+    const session = await auth();
+    const canViewHiddenTests = session?.user?.role === "ADMIN";
 
     const question = await prisma.question.findUnique({
       where: { id },
@@ -22,6 +24,11 @@ export async function GET(request, { params }) {
         sourceUrl: true,
         leetcodeSlug: true,
         leetcodeId: true,
+        testCases: {
+          where: canViewHiddenTests ? {} : { isSample: true },
+          orderBy: { id: "asc" },
+          select: { id: true, input: true, expectedOutput: true, isSample: true },
+        },
       },
     });
 
