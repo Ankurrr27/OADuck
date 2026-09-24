@@ -1,0 +1,1 @@
+ALTER TABLE "session" ADD COLUMN "admin_test_mode" BOOLEAN NOT NULL DEFAULT FALSE;

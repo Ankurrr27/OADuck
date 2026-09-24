@@ -75,18 +75,25 @@ export async function POST(request) {
     });
     if (!user)
       return Response.json({ error: "User not found." }, { status: 401 });
-    let practiceSession = await prisma.session.findFirst({
-      where: {
-        userId: user.id,
-        questionId: question.id,
-        terminationReason: null,
-      },
-      orderBy: { id: "desc" },
-    });
-    if (!practiceSession)
-      practiceSession = await prisma.session.create({
-        data: { userId: user.id, questionId: question.id },
+    let practiceSession;
+    if (body.assessmentId) {
+      practiceSession = await prisma.session.findFirst({
+        where: { id: body.assessmentId, userId: user.id, questionId: question.id },
       });
+      if (!practiceSession) return Response.json({ error: "Assessment not found." }, { status: 404 });
+      if (practiceSession.terminationReason) {
+        return Response.json({ error: "Assessment Terminated. Submissions are disabled." }, { status: 403 });
+      }
+      if (practiceSession.completedAt) {
+        return Response.json({ error: "This assessment is already completed." }, { status: 403 });
+      }
+    } else {
+      practiceSession = await prisma.session.findFirst({
+        where: { userId: user.id, questionId: question.id, terminationReason: null },
+        orderBy: { id: "desc" },
+      });
+      if (!practiceSession) practiceSession = await prisma.session.create({ data: { userId: user.id, questionId: question.id } });
+    }
 
     let passedTests = 0;
     let finalResult = null;
@@ -120,8 +127,7 @@ export async function POST(request) {
         ? "Accepted"
         : finalResult?.verdict || "Runtime Error";
     const failedTestNumber = passedTests < totalTests ? passedTests + 1 : null;
-    await prisma.submission.create({
-      data: {
+    const submissionData = {
         sessionId: practiceSession.id,
         userId: user.id,
         questionId: question.id,
@@ -137,8 +143,24 @@ export async function POST(request) {
         failedTestCaseId,
         actualOutput: finalResult?.stdout || null,
         errorMessage: finalResult?.stderr || finalResult?.compileOutput || null,
-      },
-    });
+      };
+    if (body.assessmentId) {
+      const saved = await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "session" WHERE id = ${practiceSession.id}::uuid FOR UPDATE`;
+        const latestAssessment = await tx.session.findUnique({ where: { id: practiceSession.id }, select: { terminationReason: true, completedAt: true } });
+        if (latestAssessment?.terminationReason) return "terminated";
+        if (latestAssessment?.completedAt) return "completed";
+        await tx.submission.create({ data: submissionData });
+        if (verdict === "Accepted") {
+          await tx.session.update({ where: { id: practiceSession.id }, data: { completedAt: new Date() } });
+        }
+        return true;
+      });
+      if (saved === "terminated") return Response.json({ error: "Assessment Terminated. Submissions are disabled." }, { status: 403 });
+      if (saved === "completed") return Response.json({ error: "This assessment is already completed." }, { status: 403 });
+    } else {
+      await prisma.submission.create({ data: submissionData });
+    }
     const attempts = await prisma.submission.count({
       where: { userId: user.id, questionId: question.id },
     });
