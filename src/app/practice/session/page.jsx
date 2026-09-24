@@ -15,10 +15,10 @@ export default function PracticeSessionPage() {
               <div className="absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-[#e8f1eb] blur-2xl" aria-hidden="true" />
               <div className="relative mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#123f36] text-3xl shadow-lg" aria-hidden="true">✦</div>
               <p className="relative mt-7 text-xs font-bold uppercase tracking-[.13em] text-[#a07725]">Practice session</p>
-              <h1 className="relative mt-3 text-3xl font-semibold tracking-[-.04em] sm:text-4xl">Your next question is being prepared.</h1>
-              <p className="relative mx-auto mt-4 max-w-lg text-sm leading-6 text-[#6f7771]">The question picker is the next piece to connect. Once it is ready, this calm workspace will become your focused place to think and solve.</p>
+              <h1 className="relative mt-3 text-3xl font-semibold tracking-[-.04em] sm:text-4xl">Choose a problem to begin your practice session.</h1>
+              <p className="relative mx-auto mt-4 max-w-lg text-sm leading-6 text-[#6f7771]">When you open a problem, you’ll first see the session rules and full-screen requirement. Your monitored session begins after you review the rules.</p>
               <div className="relative mx-auto mt-8 grid max-w-md gap-3 text-left sm:grid-cols-2"><div className="rounded-xl bg-[#f4f7f3] p-4"><p className="text-xs font-bold text-[#36433b]">While you wait</p><p className="mt-1 text-xs leading-5 text-[#6f7771]">Browse the library and choose a problem that looks interesting.</p></div><div className="rounded-xl bg-[#f4f7f3] p-4"><p className="text-xs font-bold text-[#36433b]">A good session</p><p className="mt-1 text-xs leading-5 text-[#6f7771]">Start with the problem, then reach for hints only when needed.</p></div></div>
-              <Link className="relative mt-8 inline-flex min-h-11 items-center justify-center rounded-lg bg-[#123f36] px-5 py-2 text-sm font-semibold text-[#f7f5ed] no-underline transition hover:bg-[#176a5a]" href="/questions">Explore question library</Link>
+              <Link className="relative mt-8 inline-flex min-h-11 items-center justify-center rounded-lg bg-[#123f36] px-5 py-2 text-sm font-semibold text-[#f7f5ed] no-underline transition hover:bg-[#176a5a]" href="/questions">Choose a problem</Link>
             </div>
           </div>
         </section>

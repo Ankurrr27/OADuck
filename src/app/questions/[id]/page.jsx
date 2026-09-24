@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import AppHeader from "../../components/AppHeader";
 import Sidebar from "../../components/Sidebar";
 import PageLoader from "../../components/PageLoader";
+import AssessmentMonitor from "../../components/AssessmentMonitor";
+import AssessmentRulesGate from "../../components/AssessmentRulesGate";
+import AdminTestModeToggle from "../../components/AdminTestModeToggle";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
@@ -72,9 +76,21 @@ function SampleResultDetails({ results, hasRun, selectedIndex, onSelect, customA
 
 export default function SolveQuestionPage() {
   const { id } = useParams();
+  const { data: authSession } = useSession();
+  const isAdmin = authSession?.user?.role === "ADMIN";
   const [question, setQuestion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [assessment, setAssessment] = useState(null);
+  const [assessmentError, setAssessmentError] = useState("");
+  const [assessmentMode, setAssessmentMode] = useState("NORMAL");
+  const [assessmentDurationMinutes, setAssessmentDurationMinutes] = useState(30);
+  const [assessmentRulesReady, setAssessmentRulesReady] = useState(false);
+  const [isAssessmentStarting, setIsAssessmentStarting] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [adminTestMode, setAdminTestMode] = useState(false);
+  const [violationCount, setViolationCount] = useState(0);
   const [language, setLanguage] = useState("cpp");
   const [codeByLanguage, setCodeByLanguage] = useState(() => Object.fromEntries(
     Object.entries(languages).map(([key, value]) => [key, value.boilerplate])
@@ -94,6 +110,16 @@ export default function SolveQuestionPage() {
   const [isOutputOpen, setIsOutputOpen] = useState(true);
   const [problemWidth, setProblemWidth] = useState(43);
   const [consoleHeight, setConsoleHeight] = useState(155);
+
+  useEffect(() => {
+    const updateFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", updateFullscreen);
+    const frame = requestAnimationFrame(updateFullscreen);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("fullscreenchange", updateFullscreen);
+    };
+  }, []);
   const visibleSampleCases = sampleResults.length > 0
     ? sampleResults
     : (question?.testCases || []).filter((testCase) => testCase.isSample).map((testCase) => ({
@@ -207,17 +233,19 @@ export default function SolveQuestionPage() {
   }
 
   async function submitCode() {
+    if (!assessment || sessionCompleted) return;
     setIsSubmitting(true);
     setEditorMessage("Submitting sample tests…");
     setOutput("");
     setSampleResults([]);
     setIsOutputOpen(true);
     try {
-      const response = await fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ problemId: id, language, code: codeByLanguage[language] }) });
+      const response = await fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ problemId: id, assessmentId: assessment?.id, language, code: codeByLanguage[language] }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to submit code.");
       setSubmissionSummary(data);
       const accepted = String(data.status || "").trim().toLowerCase() === "accepted";
+      if (accepted) setSessionCompleted(true);
       setShowSuccessDialog(Boolean(data.success && accepted));
       setActiveConsoleTab("tests");
       setOutput(`Passed: ${data.passedTests} / ${data.totalTests}\nRuntime: ${data.runtime ? `${Math.round(Number(data.runtime) * 1000)} ms` : "—"}`);
@@ -255,6 +283,37 @@ export default function SolveQuestionPage() {
     editorRef.current?.setValue(nextCode);
   }
 
+  async function startAssessment() {
+    if (!isFullscreen || isAssessmentStarting) return;
+    setIsAssessmentStarting(true);
+    setAssessmentError("");
+    try {
+      const response = await fetch("/api/assessments/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questionId: id }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not start assessment.");
+      setAssessment({ id: data.assessmentId, mode: data.mode, startedAt: data.startedAt, durationMinutes: data.durationMinutes });
+      setAssessmentMode(data.mode);
+      setAssessmentRulesReady(true);
+      setViolationCount(data.count || 0);
+    } catch (startError) {
+      setAssessmentError(startError.message || "Could not start assessment.");
+    } finally {
+      setIsAssessmentStarting(false);
+    }
+  }
+
+  async function reenterFullscreen() {
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch {
+      setEditorMessage("Use your browser full screen control to resume the session.");
+    }
+  }
+
   useEffect(() => {
     async function fetchQuestion() {
       const loadingStartedAt = Date.now();
@@ -268,6 +327,14 @@ export default function SolveQuestionPage() {
         }
         
         setQuestion(data.question);
+        fetch("/api/assessments/start")
+          .then((response) => response.ok ? response.json() : null)
+          .then((settings) => {
+            if (settings?.mode) setAssessmentMode(settings.mode);
+            if (settings?.durationMinutes) setAssessmentDurationMinutes(settings.durationMinutes);
+          })
+          .catch(() => {})
+          .finally(() => setAssessmentRulesReady(true));
       } catch (err) {
         setError("Failed to load question.");
       } finally {
@@ -309,6 +376,9 @@ export default function SolveQuestionPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
+      {assessment && <AssessmentMonitor assessmentId={assessment.id} mode={assessment.mode} enabled={!sessionCompleted} violationCount={violationCount} onViolationUpdate={setViolationCount} adminTestMode={adminTestMode} />}
+      {assessment && !isFullscreen && !sessionCompleted && <div className="assessment-fullscreen-hold"><section role="alertdialog" aria-modal="true"><h2>Full screen required</h2><p>Return to full screen to continue your assessment.</p><button type="button" onClick={reenterFullscreen}>Resume full screen</button></section></div>}
+      {!assessment && <AssessmentRulesGate mode={assessmentMode} durationMinutes={assessmentDurationMinutes} onBegin={startAssessment} isStarting={isAssessmentStarting} error={assessmentError} rulesReady={assessmentRulesReady} />}
       {showSuccessDialog && submissionSummary && (
         <div className="submission-success-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowSuccessDialog(false); }}>
           <section className="submission-success" role="dialog" aria-modal="true" aria-labelledby="submission-success-title">
@@ -325,13 +395,15 @@ export default function SolveQuestionPage() {
               <div><span>Runtime</span><strong>{submissionSummary.runtime ? `${Math.round(Number(submissionSummary.runtime) * 1000)} ms` : "—"}</strong></div>
               <div><span>Memory</span><strong>{submissionSummary.memory ? `${Math.round(Number(submissionSummary.memory) / 1024)} MB` : "—"}</strong></div>
             </div>
-            <button type="button" className="submission-success__button" onClick={() => setShowSuccessDialog(false)}>Continue</button>
+            <div className="assessment-completion-extra"><span>Violations this session</span><strong>{violationCount}</strong></div>
+            <p className="assessment-completion-note">Session complete. Your violation total has been saved to Stats.</p>
+            <div className="assessment-completion-actions"><Link href="/" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>Home</Link><Link href="/stats" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>View stats</Link></div>
           </section>
         </div>
       )}
-      <AppHeader />
+      <AppHeader assessmentTimer={assessment ? { startedAt: assessment.startedAt, durationMinutes: assessment.durationMinutes } : null} />
       <div className="solve-shell">
-        <Sidebar compact />
+        {!assessment && <Sidebar compact />}
         <div className="solve-workspace solve-workspace--resizable" style={{ "--problem-width": `${problemWidth}%` }}>
           <section className="problem-panel" onWheel={scrollProblemWithWheel} tabIndex={0}>
             <div className="problem-panel__heading">
@@ -431,11 +503,12 @@ export default function SolveQuestionPage() {
                 </label>
               </div>
               <div className="editor-actions">
+                {assessment && isAdmin && <AdminTestModeToggle assessmentId={assessment.id} enabled={adminTestMode} onChange={setAdminTestMode} />}
                 <button type="button" className="editor-button editor-button--quiet" onClick={resetSolution}>Reset solution</button>
                 {question.optimalSolutions?.length > 0 && <button type="button" className="editor-button editor-button--quiet" onClick={toggleSolution}>{showSolution ? "Hide solution" : "Show solution"}</button>}
                 <button type="button" className="editor-button editor-button--quiet" onClick={() => setEditorMessage("Code saved locally for this session.")}>Save</button>
                 <button type="button" className="editor-button editor-button--run" onClick={runCode} disabled={isRunning || isSubmitting}>{isRunning ? "Running…" : "Run"}</button>
-                <button type="button" className="editor-button editor-button--submit" onClick={submitCode} disabled={isRunning || isSubmitting}>{isSubmitting ? "Submitting…" : "Submit"}</button>
+                <button type="button" className="editor-button editor-button--submit" onClick={submitCode} disabled={isRunning || isSubmitting || sessionCompleted}>{sessionCompleted ? "Session complete" : isSubmitting ? "Submitting…" : "Submit"}</button>
               </div>
             </header>
             <div className="monaco-shell">

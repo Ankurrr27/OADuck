@@ -20,13 +20,15 @@ export default async function StatsPage() {
   let practiceSessionCount = 0;
   let currentStreak = 0;
   let activityDays = [];
+  let totalViolationCount = 0;
+  let terminatedSessionCount = 0;
 
   if (user) {
     const today = new Date();
     const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
     const startDate = new Date(todayUtc);
     startDate.setUTCDate(startDate.getUTCDate() - 83);
-    const [acceptedQuestions, practiceSessions, recentSubmissions] = await Promise.all([
+    const [acceptedQuestions, practiceSessions, recentSubmissions, violationTotals, terminatedSessions] = await Promise.all([
       prisma.submission.findMany({
         where: { userId: user.id, status: { equals: "Accepted", mode: "insensitive" }, questionId: { not: null } },
         distinct: ["questionId"],
@@ -37,10 +39,14 @@ export default async function StatsPage() {
         where: { userId: user.id, createdAt: { gte: startDate } },
         select: { createdAt: true },
       }),
+      prisma.session.aggregate({ where: { userId: user.id }, _sum: { violationCount: true } }),
+      prisma.session.count({ where: { userId: user.id, terminationReason: { not: null } } }),
     ]);
 
     solvedCount = acceptedQuestions.length;
     practiceSessionCount = practiceSessions;
+    totalViolationCount = violationTotals._sum.violationCount || 0;
+    terminatedSessionCount = terminatedSessions;
     const activityCounts = new Map();
     for (const submission of recentSubmissions) {
       const key = dayKey(submission.createdAt);
@@ -68,6 +74,8 @@ export default async function StatsPage() {
     { label: "Questions solved", value: String(solvedCount), detail: "Questions with an accepted solution" },
     { label: "Practice sessions", value: String(practiceSessionCount), detail: "Sessions started for your questions" },
     { label: "Current streak", value: `${currentStreak} ${currentStreak === 1 ? "day" : "days"}`, detail: "Consecutive days with a submission" },
+    { label: "Violations", value: String(totalViolationCount), detail: "Recorded across your sessions" },
+    { label: "Terminated sessions", value: String(terminatedSessionCount), detail: "Ended after the violation limit" },
   ];
   const activityColors = ["#edf0ec", "#dce9e0", "#b5d2c3", "#79ad98", "#176a5a"];
 
@@ -88,7 +96,7 @@ export default async function StatsPage() {
             </Link>
           </div>
 
-          <div className="mt-12 grid grid-cols-3 gap-3 max-lg:grid-cols-1">
+          <div className="mt-12 grid grid-cols-2 gap-3 lg:grid-cols-5 max-sm:grid-cols-1">
             {metrics.map((metric) => (
               <article className="grid min-h-40 content-between rounded-xl border border-[#dfe1da] bg-[#fffefa] p-5" key={metric.label}>
                 <span className="text-xs font-semibold text-[#6f7771]">{metric.label}</span>

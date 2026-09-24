@@ -104,13 +104,29 @@ model Session {
   userId            String            @map("user_id") @db.Uuid
   questionId        String            @map("question_id") @db.Uuid
   terminationReason String?           @map("termination_reason")
+  monitoringMode    String            @default("NORMAL") @map("monitoring_mode")
+  violationCount    Int               @default(0) @map("violation_count")
+  completedAt       DateTime?         @map("completed_at")
+  adminTestMode     Boolean           @default(false) @map("admin_test_mode")
   user              User              @relation(fields: [userId], references: [id])
   question          Question          @relation(fields: [questionId], references: [id])
   hints             SessionHintView[]
   doubtQueries      DoubtQuery[]
   submissions       Submission[]
+  violations        AssessmentViolation[]
 
   @@map("session")
+}
+
+model AssessmentViolation {
+  id           String   @id @default(uuid()) @db.Uuid
+  assessmentId String   @map("assessment_id") @db.Uuid
+  type         String
+  timestamp    DateTime @default(now())
+  assessment   Session  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId, timestamp])
+  @@map("assessment_violation")
 }
 
 model Hint {
