@@ -57,14 +57,15 @@ function starterCodeForQuestion(question) {
   return languages.cpp.boilerplate;
 }
 
-function SampleResultDetails({ results, hasRun, selectedIndex, onSelect, customAdded, customActive, customResult, onSelectCustom, onAddCustom, stdin, onStdinChange, onRunCustom, isRunning, isSubmitting }) {
+function SampleResultDetails({ results, hasRun, selectedIndex, onSelect, customAdded, customActive, customResult, onSelectCustom, onAddCustom, stdin, onStdinChange, onRunCustom, isRunning, isSubmitting, submissionVerdict }) {
   const selected = results[selectedIndex] || results[0];
   const allPassed = hasRun && results.every((item) => item.passed);
+  const verdict = submissionVerdict || (allPassed ? "Accepted" : results.find((item) => !item.passed)?.result?.verdict || "Wrong Answer");
   return (
     <>
-      {hasRun && <div className={`editor-sample-verdict ${allPassed ? "is-accepted" : "is-failed"}`}><strong>{allPassed ? "Accepted" : "Wrong Answer"}</strong><span>Runtime: {selected?.result?.time ? `${Math.round(Number(selected.result.time) * 1000)} ms` : "0 ms"}</span></div>}
-      <div className="editor-case-tabs">{results.map((item, index) => <button type="button" className={!customActive && selectedIndex === index ? "editor-case-tab is-selected" : "editor-case-tab"} key={index} onClick={() => onSelect(index)}><span>{hasRun ? (item.passed ? "✓" : "×") : "·"}</span> Case {index + 1}</button>)}{customAdded && <button type="button" className={`editor-case-tab editor-case-tab--custom ${customActive ? "is-selected" : ""}`} onClick={onSelectCustom}>＋ Custom</button>}<button type="button" className="editor-case-add" onClick={onAddCustom} aria-label="Add custom test case" title="Add custom test case">+</button></div>
-      {customActive ? <div className="editor-case-detail editor-case-detail--custom"><label htmlFor="code-stdin">Input</label><div className="editor-custom-case-inline__controls"><textarea id="code-stdin" value={stdin} onChange={(event) => onStdinChange(event.target.value)} placeholder="Enter your value" rows={1} /><button type="button" className="editor-button editor-button--run" onClick={onRunCustom} disabled={isRunning || isSubmitting}>{isRunning ? "Running…" : "Run"}</button></div>{customResult && <><label>Program output</label><pre>{customResult.result.stdout || "(empty)"}</pre>{(customResult.result.stderr || customResult.result.compileOutput || customResult.result.message) && <><label>Runner message</label><pre className="editor-case-diagnostic">{customResult.result.stderr || customResult.result.compileOutput || customResult.result.message}</pre></>}</>}</div> : <div className={`editor-case-detail ${selected.passed ? "is-passed" : "is-failed"}`}>
+      {hasRun && <div className={`editor-sample-verdict ${verdict === "Accepted" ? "is-accepted" : "is-failed"}`}><strong>{verdict}</strong><span>{submissionVerdict ? `Passed: ${results.filter((item) => item.passed).length} / ${results.length} tests` : `Runtime: ${selected?.result?.time ? `${Math.round(Number(selected.result.time) * 1000)} ms` : "0 ms"}`}</span></div>}
+      <div className="editor-case-tabs">{results.map((item, index) => <button type="button" className={!customActive && selectedIndex === index ? "editor-case-tab is-selected" : "editor-case-tab"} key={`${item.label || "case"}-${index}`} onClick={() => onSelect(index)}><span className={hasRun ? (item.passed ? "is-passed" : "is-failed") : "is-pending"}>{hasRun ? (item.passed ? "\u2713" : "\u00d7") : "\u00b7"}</span> {item.label || `Case ${index + 1}`}</button>)}{customAdded && <button type="button" className={`editor-case-tab editor-case-tab--custom ${customActive ? "is-selected" : ""}`} onClick={onSelectCustom}>Custom</button>}<button type="button" className="editor-case-add" onClick={onAddCustom} aria-label="Add custom test case" title="Add custom test case">+</button></div>
+      {customActive ? <div className="editor-case-detail editor-case-detail--custom"><label htmlFor="code-stdin">Input</label><div className="editor-custom-case-inline__controls"><textarea id="code-stdin" value={stdin} onChange={(event) => onStdinChange(event.target.value)} placeholder="Enter your value" rows={1} /><button type="button" className="editor-button editor-button--run" onClick={onRunCustom} disabled={isRunning || isSubmitting}>{isRunning ? "Running..." : "Run"}</button></div>{customResult && <><label>Program output</label><pre>{customResult.result.stdout || "(empty)"}</pre>{(customResult.result.stderr || customResult.result.compileOutput || customResult.result.message) && <><label>Runner message</label><pre className="editor-case-diagnostic">{customResult.result.stderr || customResult.result.compileOutput || customResult.result.message}</pre></>}</>}</div> : selected.isHidden ? <div className={`editor-case-detail ${selected.passed ? "is-passed" : "is-failed"}`}><strong>{selected.verdict}</strong><p>Hidden test case details are not displayed.</p></div> : <div className={`editor-case-detail ${selected.passed ? "is-passed" : "is-failed"}`}>
         <label>Input</label><pre>{selected.input || "(empty)"}</pre>
         <label>Program output</label><pre>{hasRun ? (selected.result.stdout || "(empty)") : "Run code to see output"}</pre>
         {hasRun && (selected.result.stderr || selected.result.compileOutput || selected.result.message) && <><label>Runner message</label><pre className="editor-case-diagnostic">{selected.result.stderr || selected.result.compileOutput || selected.result.message}</pre></>}
@@ -89,6 +90,9 @@ export default function SolveQuestionPage() {
   const [isAssessmentStarting, setIsAssessmentStarting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [completionRequested, setCompletionRequested] = useState(false);
+  const [isEndingAssessment, setIsEndingAssessment] = useState(false);
+  const [endAssessmentError, setEndAssessmentError] = useState("");
   const [adminTestMode, setAdminTestMode] = useState(false);
   const [violationCount, setViolationCount] = useState(0);
   const [language, setLanguage] = useState("cpp");
@@ -104,6 +108,7 @@ export default function SolveQuestionPage() {
   const [customCaseAdded, setCustomCaseAdded] = useState(false);
   const [customCaseActive, setCustomCaseActive] = useState(false);
   const [submissionSummary, setSubmissionSummary] = useState(null);
+  const submittedCodeRef = useRef(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [activeConsoleTab, setActiveConsoleTab] = useState("tests");
@@ -191,6 +196,10 @@ export default function SolveQuestionPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const editorRef = useRef(null);
+  const submissionPassed = submissionSummary?.status === "Accepted"
+    && submissionSummary.passedTests === submissionSummary.totalTests
+    && submissionSummary.totalTests > 0;
+  const submissionWrongAnswer = String(submissionSummary?.status).toLowerCase() === "wrong answer";
 
   async function runCode({ custom = false } = {}) {
     setIsRunning(true);
@@ -233,28 +242,64 @@ export default function SolveQuestionPage() {
   }
 
   async function submitCode() {
-    if (!assessment || sessionCompleted) return;
+    if (!assessment || sessionCompleted) return null;
     setIsSubmitting(true);
-    setEditorMessage("Submitting sample tests…");
-    setOutput("");
+    setEditorMessage("Submitting test cases...");
+    setSubmissionSummary(null);
     setSampleResults([]);
+    setSelectedTestIndex(0);
     setIsOutputOpen(true);
     try {
       const response = await fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ problemId: id, assessmentId: assessment?.id, language, code: codeByLanguage[language] }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to submit code.");
       setSubmissionSummary(data);
-      const accepted = String(data.status || "").trim().toLowerCase() === "accepted";
-      if (accepted) setSessionCompleted(true);
-      setShowSuccessDialog(Boolean(data.success && accepted));
+      setSampleResults(data.testResults || []);
+      setSelectedTestIndex(0);
+      setCustomCaseActive(false);
+      submittedCodeRef.current = codeByLanguage[language];
       setActiveConsoleTab("tests");
-      setOutput(`Passed: ${data.passedTests} / ${data.totalTests}\nRuntime: ${data.runtime ? `${Math.round(Number(data.runtime) * 1000)} ms` : "—"}`);
+      setOutput(data.terminalOutput || "");
       setEditorMessage(data.status);
+      return data;
     } catch (submitError) {
-      setOutput(submitError.message);
       setEditorMessage("Submission failed");
+      return null;
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function endAssessment() {
+    if (!assessment || sessionCompleted || isEndingAssessment) return;
+    setShowSuccessDialog(false);
+    setCompletionRequested(true);
+    setEndAssessmentError("");
+  }
+
+  async function confirmEndAssessment() {
+    if (!assessment || isEndingAssessment) return;
+    setIsEndingAssessment(true);
+    try {
+      const submission = await submitCode();
+      if (!submission) {
+        setEndAssessmentError("Code could not be submitted. Review the submission error, then try again.");
+        return;
+      }
+      const response = await fetch(`/api/assessments/${assessment.id}/end`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to end assessment.");
+      if (Number.isFinite(data.violationCount)) setViolationCount(data.violationCount);
+      setSessionCompleted(true);
+      setCompletionRequested(false);
+      setShowSuccessDialog(true);
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    } catch (endError) {
+      setEndAssessmentError(endError.message);
+      setOutput(endError.message);
+      setEditorMessage("Could not end assessment");
+    } finally {
+      setIsEndingAssessment(false);
     }
   }
 
@@ -379,13 +424,14 @@ export default function SolveQuestionPage() {
       {assessment && <AssessmentMonitor assessmentId={assessment.id} mode={assessment.mode} enabled={!sessionCompleted} violationCount={violationCount} onViolationUpdate={setViolationCount} adminTestMode={adminTestMode} />}
       {assessment && !isFullscreen && !sessionCompleted && <div className="assessment-fullscreen-hold"><section role="alertdialog" aria-modal="true"><h2>Full screen required</h2><p>Return to full screen to continue your assessment.</p><button type="button" onClick={reenterFullscreen}>Resume full screen</button></section></div>}
       {!assessment && <AssessmentRulesGate mode={assessmentMode} durationMinutes={assessmentDurationMinutes} onBegin={startAssessment} isStarting={isAssessmentStarting} error={assessmentError} rulesReady={assessmentRulesReady} />}
+      {completionRequested && !sessionCompleted && <div className="submission-success-backdrop"><section className="submission-success" role="alertdialog" aria-modal="true" aria-labelledby="end-assessment-title"><h2 id="end-assessment-title">Do you want to end the assessment?</h2><p className="submission-success__name">Your current code will be submitted before the assessment closes. You will then see your results and can go to Home or Stats.</p>{endAssessmentError && <p className="assessment-gate__error" role="alert">{endAssessmentError}</p>}<div className="assessment-completion-actions"><button type="button" className="submission-success__button" onClick={() => setCompletionRequested(false)} disabled={isEndingAssessment}>Keep working</button><button type="button" className="submission-success__button" onClick={confirmEndAssessment} disabled={isEndingAssessment}>{isEndingAssessment ? "Submitting and ending…" : "Yes, submit and end"}</button></div></section></div>}
       {showSuccessDialog && submissionSummary && (
         <div className="submission-success-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowSuccessDialog(false); }}>
           <section className="submission-success" role="dialog" aria-modal="true" aria-labelledby="submission-success-title">
             <button className="submission-success__close" type="button" onClick={() => setShowSuccessDialog(false)} aria-label="Close submission summary">×</button>
-            <div className="submission-success__icon" aria-hidden="true">✓</div>
-            <p className="submission-success__eyebrow">Problem {submissionSummary.questionNumber ?? question.questionNumber} · Accepted</p>
-            <h2 id="submission-success-title">Solution submitted</h2>
+            <div className={`submission-success__icon ${submissionWrongAnswer ? "submission-success__icon--failed" : submissionPassed ? "" : "submission-success__icon--neutral"}`} aria-hidden="true">{submissionPassed ? "\u2713" : submissionWrongAnswer ? "\u00d7" : "!"}</div>
+            <p className="submission-success__eyebrow">Problem {submissionSummary.questionNumber || question.questionNumber} · {submissionSummary.status}</p>
+            <h2 id="submission-success-title">{sessionCompleted ? "Assessment ended" : "Submission results"}</h2>
             <p className="submission-success__name">{submissionSummary.questionTitle || question.title}</p>
             <div className="submission-success__stats">
               <div><span>Tests passed</span><strong>{submissionSummary.passedTests}/{submissionSummary.totalTests}</strong></div>
@@ -396,8 +442,8 @@ export default function SolveQuestionPage() {
               <div><span>Memory</span><strong>{submissionSummary.memory ? `${Math.round(Number(submissionSummary.memory) / 1024)} MB` : "—"}</strong></div>
             </div>
             <div className="assessment-completion-extra"><span>Violations this session</span><strong>{violationCount}</strong></div>
-            <p className="assessment-completion-note">Session complete. Your violation total has been saved to Stats.</p>
-            <div className="assessment-completion-actions"><Link href="/" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>Home</Link><Link href="/stats" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>View stats</Link></div>
+            <p className="assessment-completion-note">{sessionCompleted ? "Your session results and violation total have been saved to Stats." : completionRequested ? "Review your final submission, then confirm to close the assessment." : "Your session is still active. Submit again after editing, or end the assessment when you are ready."}</p>
+            {sessionCompleted ? <div className="assessment-completion-actions"><Link href="/" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>Home</Link><Link href="/stats" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>View stats</Link></div> : <div className="assessment-completion-actions">{completionRequested ? <button type="button" className="submission-success__button" onClick={confirmEndAssessment} disabled={isEndingAssessment}>{isEndingAssessment ? "Ending assessment…" : "Confirm end assessment"}</button> : <button type="button" className="submission-success__button" onClick={() => setShowSuccessDialog(false)}>Continue assessment</button>}</div>}
           </section>
         </div>
       )}
@@ -421,7 +467,7 @@ export default function SolveQuestionPage() {
               ))}
               {question.sourceUrl && (
                 <a className="source-link" href={question.sourceUrl} target="_blank" rel="noopener noreferrer">
-                  View Original Source ↗
+                  View Original Source â†—
                 </a>
               )}
             </div>
@@ -509,6 +555,7 @@ export default function SolveQuestionPage() {
                 <button type="button" className="editor-button editor-button--quiet" onClick={() => setEditorMessage("Code saved locally for this session.")}>Save</button>
                 <button type="button" className="editor-button editor-button--run" onClick={runCode} disabled={isRunning || isSubmitting}>{isRunning ? "Running…" : "Run"}</button>
                 <button type="button" className="editor-button editor-button--submit" onClick={submitCode} disabled={isRunning || isSubmitting || sessionCompleted}>{sessionCompleted ? "Session complete" : isSubmitting ? "Submitting…" : "Submit"}</button>
+                {assessment && <button type="button" className="editor-button editor-button--quiet" onClick={endAssessment} disabled={isRunning || isSubmitting || sessionCompleted || isEndingAssessment}>{isEndingAssessment ? "Ending…" : "End assessment"}</button>}
               </div>
             </header>
             <div className="monaco-shell">
@@ -539,7 +586,7 @@ export default function SolveQuestionPage() {
               <div className="editor-output" aria-live="polite">
                 <div className="editor-tabs" role="tablist" aria-label="Execution results">
                   <button type="button" className={activeConsoleTab === "tests" ? "editor-tab editor-tab--active" : "editor-tab"} onClick={() => { setActiveConsoleTab("tests"); setIsOutputOpen(true); }}>✓ Testcase</button>
-                  <button type="button" className={activeConsoleTab === "terminal" ? "editor-tab editor-tab--active" : "editor-tab"} onClick={() => { setActiveConsoleTab("terminal"); setIsOutputOpen(true); }}>› Test Result</button>
+                  <button type="button" className={activeConsoleTab === "terminal" ? "editor-tab editor-tab--active" : "editor-tab"} onClick={() => { setActiveConsoleTab("terminal"); setIsOutputOpen(true); }}><svg className="editor-tab__icon" aria-hidden="true" viewBox="0 0 20 20"><path d="m6 4 6 6-6 6M13 16h4" /></svg>Test Result</button>
                 </div>
                 {activeConsoleTab === "terminal" ? (
                   <pre className="editor-terminal">{output || "Run your code to see terminal output here."}</pre>
@@ -549,9 +596,9 @@ export default function SolveQuestionPage() {
                       <div className="editor-submission-result__headline"><strong>{submissionSummary.status}</strong><span>Passed: {submissionSummary.passedTests} / {submissionSummary.totalTests} test cases</span><span>Runtime: {submissionSummary.runtime ? `${Math.round(Number(submissionSummary.runtime) * 1000)} ms` : "0 ms"}</span></div>
                       {submissionSummary.failedTestNumber && <div className="editor-submission-result__failed">Failed on test case {submissionSummary.failedTestNumber}. Hidden test details are not shown.</div>}
                     </div>}
-                    {visibleSampleCases.length > 0 && <SampleResultDetails results={visibleSampleCases} hasRun={sampleResults.length > 0} selectedIndex={selectedTestIndex} onSelect={(index) => { setSelectedTestIndex(index); setCustomCaseActive(false); }} customAdded={customCaseAdded} customActive={customCaseActive} customResult={customResult} onSelectCustom={() => setCustomCaseActive(true)} onAddCustom={() => { setCustomCaseAdded(true); setCustomCaseActive(true); }} stdin={stdin} onStdinChange={setStdin} onRunCustom={() => runCode({ custom: true })} isRunning={isRunning} isSubmitting={isSubmitting} />}
+                    {visibleSampleCases.length > 0 && <SampleResultDetails results={visibleSampleCases} hasRun={sampleResults.length > 0} selectedIndex={selectedTestIndex} onSelect={(index) => { setSelectedTestIndex(index); setCustomCaseActive(false); }} customAdded={customCaseAdded} customActive={customCaseActive} customResult={customResult} onSelectCustom={() => setCustomCaseActive(true)} onAddCustom={() => { setCustomCaseAdded(true); setCustomCaseActive(true); }} stdin={stdin} onStdinChange={setStdin} onRunCustom={() => runCode({ custom: true })} isRunning={isRunning} isSubmitting={isSubmitting} submissionVerdict={submissionSummary?.status} />}
                     {visibleSampleCases.length === 0 && !submissionSummary && <div className="editor-test-empty">No sample test cases are configured for this question.</div>}
-                    {sampleResults.length > 0 ? sampleResults.map((item, index) => (
+                    {sampleResults.filter((item) => !item.isHidden).length > 0 ? sampleResults.filter((item) => !item.isHidden).map((item, index) => (
                       <div className={`editor-test-card ${item.passed ? "is-passed" : "is-failed"}`} key={index}>
                         <div className="editor-test-card__header"><strong><span>{item.passed ? "✓" : "×"}</span> Sample {index + 1}</strong><em>{item.passed ? "Passed" : item.result.verdict}</em></div>
                         <div className="editor-test-card__values">

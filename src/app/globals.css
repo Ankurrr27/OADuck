@@ -264,6 +264,7 @@ main > div > section > p:first-child[class*="uppercase"] {
 .editor-tab { border: 0; border-bottom: 2px solid transparent; background: transparent; padding: .35rem .6rem .45rem; color: #8f9b95; cursor: pointer; font: inherit; font-size: .68rem; }
 .editor-tab:hover { color: #e4eee8; }
 .editor-tab--active { border-bottom-color: #56b99e; color: #effff5; }
+.editor-tab__icon { display: inline-block; width: .85rem; height: .85rem; margin-right: .25rem; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -.12rem; }
 .editor-terminal { min-height: 0; }
 .editor-test-results { flex: 1; min-height: 0; overflow: auto; border: 1px solid #444; border-radius: 4px; background: #171717; padding: .55rem; }
 .editor-test-summary { margin-bottom: .45rem; border-radius: 4px; padding: .5rem .6rem; font-size: .72rem; font-weight: 700; }
@@ -542,6 +543,10 @@ main > div > section > p:first-child[class*="uppercase"] {
 .editor-case-tab.is-selected { border-color: #d6e5d9; background: #e7f0e8; color: #173f34; box-shadow: inset 0 -2px 0 #e5b84e; }
 .editor-case-tab span { color: #278453; }
 .editor-case-tab:not(.is-selected) span { color: #54856a; }
+.editor-case-tab span { display: inline-block; min-width: .9rem; margin-right: .25rem; text-align: center; font-size: .8rem; line-height: 1; }
+.editor-case-tab span.is-passed { color: #168152; }
+.editor-case-tab span.is-failed { color: #c33f35; }
+.editor-case-tab span.is-pending { color: #829087; }
 .editor-case-detail { border: 0 !important; padding: 0; }
 .editor-case-detail label { margin-top: .35rem; color: #6e7e73; font-family: var(--font-manrope), sans-serif; font-size: .66rem; letter-spacing: 0; text-transform: none; }
 .editor-case-detail pre { max-height: 5rem; min-height: 2.35rem; border: 1px solid #dce7dd; border-radius: 8px; background: #f3f7f2; color: #20392e; padding: .55rem .7rem; }
@@ -551,6 +556,9 @@ main > div > section > p:first-child[class*="uppercase"] {
 .editor-case-tab:hover { background: #263b32; color: #d1ddd3; }
 .editor-case-tab.is-selected { border-color: #354c3f; background: #293c32; color: #d7e2d8; box-shadow: inset 0 -2px 0 #c8a94d; }
 .editor-case-tab span, .editor-case-tab:not(.is-selected) span { color: #83aa8e; }
+.editor-case-tab span.is-passed, .editor-case-tab:not(.is-selected) span.is-passed { color: #48cf83; }
+.editor-case-tab span.is-failed, .editor-case-tab:not(.is-selected) span.is-failed { color: #ff786c; }
+.editor-case-tab span.is-pending, .editor-case-tab:not(.is-selected) span.is-pending { color: #95a198; }
 .editor-case-add { display: grid; flex: 0 0 2rem; width: 2rem; height: 2rem; place-items: center; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #93a298; cursor: pointer; font: inherit; font-size: 1.2rem; line-height: 1; }
 .editor-case-add:hover { border-color: #354c3f; background: #293c32; color: #d7e2d8; }
 .editor-case-detail label { color: #909f94; }
@@ -579,6 +587,8 @@ main > div > section > p:first-child[class*="uppercase"] {
 .submission-success { position: relative; width: min(100%, 420px); border: 1px solid #dbe6dd; border-radius: 18px; background: #fffefa; padding: 1.4rem; color: #17221e; box-shadow: 0 24px 70px rgba(9, 24, 19, .26); animation: submission-success-in .2s ease-out; }
 .submission-success__close { position: absolute; top: .7rem; right: .75rem; width: 2rem; height: 2rem; border: 0; border-radius: 50%; background: #f0f4ef; color: #526158; cursor: pointer; font-size: 1.25rem; line-height: 1; }
 .submission-success__icon { display: grid; width: 2.6rem; height: 2.6rem; place-items: center; border-radius: 50%; background: #e2f3e8; color: #168152; font-size: 1.35rem; font-weight: 800; }
+.submission-success__icon--failed { background: #fae7e2; color: #b42318; }
+.submission-success__icon--neutral { background: #eef1ed; color: #657168; }
 .submission-success__eyebrow { margin: .85rem 0 .2rem; color: #28715a; font-size: .68rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .submission-success h2 { margin: 0; font-size: 1.35rem; letter-spacing: -.025em; }
 .submission-success__name { margin: .2rem 0 1rem; color: #718077; font-size: .84rem; }

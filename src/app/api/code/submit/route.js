@@ -98,8 +98,13 @@ export async function POST(request) {
     let passedTests = 0;
     let finalResult = null;
     let failedTestCaseId = null;
-    for (const testCase of hiddenCases.slice(0, 100)) {
-      finalResult = normalizeResult(
+    let failedTestNumber = null;
+    const testCases = question.testCases.slice(0, 100);
+    const testResults = [];
+    const visibleTerminalLines = [];
+    let firstHiddenDiagnostic = "";
+    for (const [index, testCase] of testCases.entries()) {
+      const result = normalizeResult(
         await executeCode({
           language: "cpp",
           sourceCode: body.code,
@@ -107,26 +112,32 @@ export async function POST(request) {
           timeoutSeconds: 2,
         }),
       );
-      if (finalResult.statusId !== 3) {
+      const passed = result.statusId === 3 && normalizeOutput(result.stdout) === normalizeOutput(testCase.expectedOutput);
+      if (result.statusId === 3 && !passed) result.verdict = "Wrong Answer";
+      if (passed) passedTests += 1;
+      if (!passed && !failedTestCaseId) {
         failedTestCaseId = testCase.id;
-        break;
+        failedTestNumber = index + 1;
+        finalResult = result;
       }
-      if (
-        normalizeOutput(finalResult.stdout) !==
-        normalizeOutput(testCase.expectedOutput)
-      ) {
-        finalResult.verdict = "Wrong Answer";
-        failedTestCaseId = testCase.id;
-        break;
-      }
-      passedTests += 1;
+      if (!finalResult) finalResult = result;
+      const isHidden = !testCase.isSample;
+      const diagnostic = result.stderr || result.compileOutput || result.message || "";
+      testResults.push({
+        label: isHidden ? `Hidden test ${hiddenCases.indexOf(testCase) + 1}` : `Sample ${question.testCases.filter((item) => item.isSample).indexOf(testCase) + 1}`,
+        isHidden,
+        passed,
+        verdict: passed ? "Passed" : result.verdict,
+        ...(isHidden ? {} : { input: testCase.input, expectedOutput: testCase.expectedOutput, result }),
+      });
+      if (!isHidden) visibleTerminalLines.push(`Sample ${question.testCases.filter((item) => item.isSample).indexOf(testCase) + 1}: ${passed ? "Passed" : result.verdict}\n${result.stdout || diagnostic || "No output."}`);
+      else if (!passed && diagnostic && !firstHiddenDiagnostic) firstHiddenDiagnostic = `${testResults.at(-1).label}: ${diagnostic}`;
     }
-    const totalTests = Math.min(hiddenCases.length, 100);
+    const totalTests = testCases.length;
     const verdict =
       passedTests === totalTests
         ? "Accepted"
         : finalResult?.verdict || "Runtime Error";
-    const failedTestNumber = passedTests < totalTests ? passedTests + 1 : null;
     const submissionData = {
         sessionId: practiceSession.id,
         userId: user.id,
@@ -151,9 +162,6 @@ export async function POST(request) {
         if (latestAssessment?.terminationReason) return "terminated";
         if (latestAssessment?.completedAt) return "completed";
         await tx.submission.create({ data: submissionData });
-        if (verdict === "Accepted") {
-          await tx.session.update({ where: { id: practiceSession.id }, data: { completedAt: new Date() } });
-        }
         return true;
       });
       if (saved === "terminated") return Response.json({ error: "Assessment Terminated. Submissions are disabled." }, { status: 403 });
@@ -178,6 +186,8 @@ export async function POST(request) {
       failedTestNumber,
       runtime: finalResult?.time || null,
       memory: finalResult?.memory || null,
+      testResults,
+      terminalOutput: [visibleTerminalLines.join("\n\n"), firstHiddenDiagnostic].filter(Boolean).join("\n\n"),
     });
   } catch (error) {
     console.error("Code submission failed:", error);
