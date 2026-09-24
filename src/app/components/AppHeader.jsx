@@ -38,7 +38,7 @@ export default function AppHeader() {
   }
 
   return (
-    <header className="app-header sticky top-0 z-30 flex h-14 items-center justify-between bg-[#111416] px-4 sm:px-6 md:h-[72px] md:px-[clamp(24px,6vw,86px)] md:py-0">
+    <header className="app-header sticky top-0 z-30 flex h-12 items-center justify-between bg-[#111416] px-4 sm:px-6 md:h-14 md:px-[clamp(24px,6vw,86px)] md:py-0">
       <BrandLogo dark />
       
       <div className="ml-auto flex items-center gap-2 sm:gap-3">

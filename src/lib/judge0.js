@@ -83,12 +83,17 @@ export async function executeCode({ language, sourceCode, stdin = "", timeoutSec
 
 export function normalizeResult(result) {
   const statusId = result.status?.id || 0;
+  const stderr = String(result.stderr || "")
+    .split(/\r?\n/)
+    .filter((line) => !/^\/bin\/bash:\s+warning:\s+setlocale:\s+LC_ALL:\s+cannot change locale\s+\(en_US\.UTF-8\)\s*$/.test(line.trim()))
+    .join("\n")
+    .trim();
   return {
     status: result.status?.description || "Unknown",
     statusId,
     verdict: statusId === 3 ? "Accepted" : statusId === 4 ? "Wrong Answer" : statusId === 5 ? "Time Limit Exceeded" : statusId === 6 ? "Compilation Error" : statusId >= 7 && statusId <= 12 ? "Runtime Error" : statusId === 13 ? "Internal Error" : "Processing",
     stdout: result.stdout || "",
-    stderr: result.stderr || "",
+    stderr,
     compileOutput: result.compile_output || "",
     message: result.message || "",
     time: result.time || null,

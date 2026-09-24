@@ -1,17 +1,76 @@
 import Link from "next/link";
 import Sidebar from "../components/Sidebar";
 import AppHeader from "../components/AppHeader";
-
-const metrics = [
-  { label: "Questions solved", value: "0", detail: "Complete a problem to begin" },
-  { label: "Practice sessions", value: "0", detail: "Your focused sessions appear here" },
-  { label: "Current streak", value: "0 days", detail: "Practice on consecutive days" },
-];
+import { auth } from "../../auth";
+import prisma from "../../lib/prisma";
 
 const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const activityDays = Array.from({ length: 84 }, (_, index) => ({ id: index, label: "No activity recorded" }));
 
-export default function StatsPage() {
+function dayKey(date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+export default async function StatsPage() {
+  const session = await auth();
+  const user = session?.user?.email
+    ? await prisma.user.findUnique({ where: { email: session.user.email }, select: { id: true } })
+    : null;
+
+  let solvedCount = 0;
+  let practiceSessionCount = 0;
+  let currentStreak = 0;
+  let activityDays = [];
+
+  if (user) {
+    const today = new Date();
+    const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    const startDate = new Date(todayUtc);
+    startDate.setUTCDate(startDate.getUTCDate() - 83);
+    const [acceptedQuestions, practiceSessions, recentSubmissions] = await Promise.all([
+      prisma.submission.findMany({
+        where: { userId: user.id, status: { equals: "Accepted", mode: "insensitive" }, questionId: { not: null } },
+        distinct: ["questionId"],
+        select: { questionId: true },
+      }),
+      prisma.session.count({ where: { userId: user.id } }),
+      prisma.submission.findMany({
+        where: { userId: user.id, createdAt: { gte: startDate } },
+        select: { createdAt: true },
+      }),
+    ]);
+
+    solvedCount = acceptedQuestions.length;
+    practiceSessionCount = practiceSessions;
+    const activityCounts = new Map();
+    for (const submission of recentSubmissions) {
+      const key = dayKey(submission.createdAt);
+      activityCounts.set(key, (activityCounts.get(key) || 0) + 1);
+    }
+    const activeDates = new Set(activityCounts.keys());
+    const currentKey = dayKey(todayUtc);
+    const yesterday = new Date(todayUtc);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    let streakDate = activeDates.has(currentKey) ? todayUtc : yesterday;
+    while (activeDates.has(dayKey(streakDate))) {
+      currentStreak += 1;
+      streakDate = new Date(streakDate);
+      streakDate.setUTCDate(streakDate.getUTCDate() - 1);
+    }
+    activityDays = Array.from({ length: 84 }, (_, index) => {
+      const date = new Date(startDate);
+      date.setUTCDate(date.getUTCDate() + index);
+      const count = activityCounts.get(dayKey(date)) || 0;
+      return { id: dayKey(date), count, label: `${dayKey(date)}: ${count} ${count === 1 ? "submission" : "submissions"}`, level: count === 0 ? 0 : count === 1 ? 1 : count <= 3 ? 2 : count <= 6 ? 3 : 4 };
+    });
+  }
+
+  const metrics = [
+    { label: "Questions solved", value: String(solvedCount), detail: "Questions with an accepted solution" },
+    { label: "Practice sessions", value: String(practiceSessionCount), detail: "Sessions started for your questions" },
+    { label: "Current streak", value: `${currentStreak} ${currentStreak === 1 ? "day" : "days"}`, detail: "Consecutive days with a submission" },
+  ];
+  const activityColors = ["#edf0ec", "#dce9e0", "#b5d2c3", "#79ad98", "#176a5a"];
+
   return (
     <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
       <AppHeader />
@@ -60,15 +119,15 @@ export default function StatsPage() {
               <div className="grid grid-rows-7 gap-1 pt-0.5 text-[10px] text-[#7c847e]">
                 {weekDays.map((day) => <span className="h-3" key={day}>{["Mon", "Wed", "Fri"].includes(day) ? day : ""}</span>)}
               </div>
-              <div className="grid min-w-[530px] grid-flow-col grid-rows-7 gap-1" role="img" aria-label="No practice activity recorded in the last 12 weeks">
+              <div className="grid min-w-[530px] grid-flow-col grid-rows-7 gap-1" role="group" aria-label="Submission activity in the last 12 weeks">
                 {activityDays.map((day) => (
-                  <span className="h-3 w-3 rounded-[3px] bg-[#edf0ec]" key={day.id} aria-label={day.label} />
+                  <span className="h-3 w-3 rounded-[3px]" key={day.id} aria-label={day.label} title={day.label} style={{ backgroundColor: activityColors[day.level] }} />
                 ))}
               </div>
             </div>
 
             <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-[#e7e9e4] pt-5 text-sm text-[#6f7771]">
-              <span>No activity yet — your first session will light up the calendar.</span>
+              <span>{activityDays.some((day) => day.count > 0) ? `${activityDays.reduce((total, day) => total + day.count, 0)} submissions in the last 12 weeks.` : "No recent submissions yet — run or submit a solution to start tracking activity."}</span>
               <Link href="/questions" className="font-semibold text-[#176a5a] underline decoration-[#9ebfb2] underline-offset-4">Browse questions</Link>
             </div>
           </section>

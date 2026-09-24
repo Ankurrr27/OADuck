@@ -8,6 +8,9 @@ x-logging:
 services:
   server:
     image: judge0/judge0:1.13.1
+    environment:
+      LANG: C
+      LC_ALL: C
     volumes:
       - ./judge0.conf:/judge0.conf:ro
     ports:
@@ -19,6 +22,9 @@ services:
   workers:
     image: judge0/judge0:1.13.1
     command: ["./scripts/workers"]
+    environment:
+      LANG: C
+      LC_ALL: C
     volumes:
       - ./judge0.conf:/judge0.conf:ro
     privileged: true

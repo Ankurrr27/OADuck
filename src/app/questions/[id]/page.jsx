@@ -53,18 +53,19 @@ function starterCodeForQuestion(question) {
   return languages.cpp.boilerplate;
 }
 
-function SampleResultDetails({ results, selectedIndex, onSelect }) {
+function SampleResultDetails({ results, hasRun, selectedIndex, onSelect, customAdded, customActive, customResult, onSelectCustom, onAddCustom, stdin, onStdinChange, onRunCustom, isRunning, isSubmitting }) {
   const selected = results[selectedIndex] || results[0];
-  const allPassed = results.every((item) => item.passed);
+  const allPassed = hasRun && results.every((item) => item.passed);
   return (
     <>
-      <div className={`editor-sample-verdict ${allPassed ? "is-accepted" : "is-failed"}`}><strong>{allPassed ? "Accepted" : "Wrong Answer"}</strong><span>Runtime: {selected?.result?.time ? `${Math.round(Number(selected.result.time) * 1000)} ms` : "0 ms"}</span></div>
-      <div className="editor-case-tabs">{results.map((item, index) => <button type="button" className={selectedIndex === index ? "editor-case-tab is-selected" : "editor-case-tab"} key={index} onClick={() => onSelect(index)}><span>{item.passed ? "✓" : "×"}</span> Case {index + 1}</button>)}</div>
-      <div className={`editor-case-detail ${selected.passed ? "is-passed" : "is-failed"}`}>
+      {hasRun && <div className={`editor-sample-verdict ${allPassed ? "is-accepted" : "is-failed"}`}><strong>{allPassed ? "Accepted" : "Wrong Answer"}</strong><span>Runtime: {selected?.result?.time ? `${Math.round(Number(selected.result.time) * 1000)} ms` : "0 ms"}</span></div>}
+      <div className="editor-case-tabs">{results.map((item, index) => <button type="button" className={!customActive && selectedIndex === index ? "editor-case-tab is-selected" : "editor-case-tab"} key={index} onClick={() => onSelect(index)}><span>{hasRun ? (item.passed ? "✓" : "×") : "·"}</span> Case {index + 1}</button>)}{customAdded && <button type="button" className={`editor-case-tab editor-case-tab--custom ${customActive ? "is-selected" : ""}`} onClick={onSelectCustom}>＋ Custom</button>}<button type="button" className="editor-case-add" onClick={onAddCustom} aria-label="Add custom test case" title="Add custom test case">+</button></div>
+      {customActive ? <div className="editor-case-detail editor-case-detail--custom"><label htmlFor="code-stdin">Input</label><div className="editor-custom-case-inline__controls"><textarea id="code-stdin" value={stdin} onChange={(event) => onStdinChange(event.target.value)} placeholder="Enter your value" rows={1} /><button type="button" className="editor-button editor-button--run" onClick={onRunCustom} disabled={isRunning || isSubmitting}>{isRunning ? "Running…" : "Run"}</button></div>{customResult && <><label>Program output</label><pre>{customResult.result.stdout || "(empty)"}</pre>{(customResult.result.stderr || customResult.result.compileOutput || customResult.result.message) && <><label>Runner message</label><pre className="editor-case-diagnostic">{customResult.result.stderr || customResult.result.compileOutput || customResult.result.message}</pre></>}</>}</div> : <div className={`editor-case-detail ${selected.passed ? "is-passed" : "is-failed"}`}>
         <label>Input</label><pre>{selected.input || "(empty)"}</pre>
-        <label>Output</label><pre>{selected.result.stdout || selected.result.stderr || selected.result.compileOutput || "(empty)"}</pre>
+        <label>Program output</label><pre>{hasRun ? (selected.result.stdout || "(empty)") : "Run code to see output"}</pre>
+        {hasRun && (selected.result.stderr || selected.result.compileOutput || selected.result.message) && <><label>Runner message</label><pre className="editor-case-diagnostic">{selected.result.stderr || selected.result.compileOutput || selected.result.message}</pre></>}
         <label>Expected</label><pre>{selected.expectedOutput || "(empty)"}</pre>
-      </div>
+      </div>}
     </>
   );
 }
@@ -82,13 +83,25 @@ export default function SolveQuestionPage() {
   const [stdin, setStdin] = useState("");
   const [output, setOutput] = useState("");
   const [sampleResults, setSampleResults] = useState([]);
+  const [customResult, setCustomResult] = useState(null);
   const [selectedTestIndex, setSelectedTestIndex] = useState(0);
+  const [customCaseAdded, setCustomCaseAdded] = useState(false);
+  const [customCaseActive, setCustomCaseActive] = useState(false);
   const [submissionSummary, setSubmissionSummary] = useState(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
-  const [activeConsoleTab, setActiveConsoleTab] = useState("terminal");
+  const [activeConsoleTab, setActiveConsoleTab] = useState("tests");
   const [isOutputOpen, setIsOutputOpen] = useState(true);
   const [problemWidth, setProblemWidth] = useState(43);
-  const [consoleHeight, setConsoleHeight] = useState(190);
+  const [consoleHeight, setConsoleHeight] = useState(155);
+  const visibleSampleCases = sampleResults.length > 0
+    ? sampleResults
+    : (question?.testCases || []).filter((testCase) => testCase.isSample).map((testCase) => ({
+      input: testCase.input,
+      expectedOutput: testCase.expectedOutput,
+      passed: false,
+      result: {},
+    }));
 
   useEffect(() => {
     try {
@@ -157,7 +170,8 @@ export default function SolveQuestionPage() {
     setIsRunning(true);
     setEditorMessage("Running…");
     setOutput("");
-    setSampleResults([]);
+    if (!custom) setSampleResults([]);
+    if (custom) setCustomResult(null);
     setSubmissionSummary(null);
     setIsOutputOpen(true);
     try {
@@ -165,6 +179,14 @@ export default function SolveQuestionPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to run code.");
       const result = data.result;
+      if (custom) {
+        setCustomResult({ input: stdin, result });
+        setCustomCaseAdded(true);
+        setCustomCaseActive(true);
+        setActiveConsoleTab("tests");
+        setEditorMessage(result.verdict || result.status);
+        return;
+      }
       if (data.results) {
         setSampleResults(data.results);
         setSelectedTestIndex(0);
@@ -195,6 +217,8 @@ export default function SolveQuestionPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to submit code.");
       setSubmissionSummary(data);
+      const accepted = String(data.status || "").trim().toLowerCase() === "accepted";
+      setShowSuccessDialog(Boolean(data.success && accepted));
       setActiveConsoleTab("tests");
       setOutput(`Passed: ${data.passedTests} / ${data.totalTests}\nRuntime: ${data.runtime ? `${Math.round(Number(data.runtime) * 1000)} ms` : "—"}`);
       setEditorMessage(data.status);
@@ -285,6 +309,26 @@ export default function SolveQuestionPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
+      {showSuccessDialog && submissionSummary && (
+        <div className="submission-success-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowSuccessDialog(false); }}>
+          <section className="submission-success" role="dialog" aria-modal="true" aria-labelledby="submission-success-title">
+            <button className="submission-success__close" type="button" onClick={() => setShowSuccessDialog(false)} aria-label="Close submission summary">×</button>
+            <div className="submission-success__icon" aria-hidden="true">✓</div>
+            <p className="submission-success__eyebrow">Problem {submissionSummary.questionNumber ?? question.questionNumber} · Accepted</p>
+            <h2 id="submission-success-title">Solution submitted</h2>
+            <p className="submission-success__name">{submissionSummary.questionTitle || question.title}</p>
+            <div className="submission-success__stats">
+              <div><span>Tests passed</span><strong>{submissionSummary.passedTests}/{submissionSummary.totalTests}</strong></div>
+              <div><span>Attempts</span><strong>{submissionSummary.attempts}</strong></div>
+              <div><span>Time complexity</span><strong>{submissionSummary.expectedTC || "Not specified"}</strong></div>
+              <div><span>Space complexity</span><strong>{submissionSummary.expectedSC || "Not specified"}</strong></div>
+              <div><span>Runtime</span><strong>{submissionSummary.runtime ? `${Math.round(Number(submissionSummary.runtime) * 1000)} ms` : "—"}</strong></div>
+              <div><span>Memory</span><strong>{submissionSummary.memory ? `${Math.round(Number(submissionSummary.memory) / 1024)} MB` : "—"}</strong></div>
+            </div>
+            <button type="button" className="submission-success__button" onClick={() => setShowSuccessDialog(false)}>Continue</button>
+          </section>
+        </div>
+      )}
       <AppHeader />
       <div className="solve-shell">
         <Sidebar compact />
@@ -421,8 +465,8 @@ export default function SolveQuestionPage() {
             <div className="editor-console" style={{ height: isOutputOpen ? `${consoleHeight}px` : "auto" }}>
               <div className="editor-output" aria-live="polite">
                 <div className="editor-tabs" role="tablist" aria-label="Execution results">
-                  <button type="button" className={activeConsoleTab === "terminal" ? "editor-tab editor-tab--active" : "editor-tab"} onClick={() => { setActiveConsoleTab("terminal"); setIsOutputOpen(true); }}>Terminal</button>
-                  <button type="button" className={activeConsoleTab === "tests" ? "editor-tab editor-tab--active" : "editor-tab"} onClick={() => { setActiveConsoleTab("tests"); setIsOutputOpen(true); }}>Sample tests</button>
+                  <button type="button" className={activeConsoleTab === "tests" ? "editor-tab editor-tab--active" : "editor-tab"} onClick={() => { setActiveConsoleTab("tests"); setIsOutputOpen(true); }}>✓ Testcase</button>
+                  <button type="button" className={activeConsoleTab === "terminal" ? "editor-tab editor-tab--active" : "editor-tab"} onClick={() => { setActiveConsoleTab("terminal"); setIsOutputOpen(true); }}>› Test Result</button>
                 </div>
                 {activeConsoleTab === "terminal" ? (
                   <pre className="editor-terminal">{output || "Run your code to see terminal output here."}</pre>
@@ -432,7 +476,8 @@ export default function SolveQuestionPage() {
                       <div className="editor-submission-result__headline"><strong>{submissionSummary.status}</strong><span>Passed: {submissionSummary.passedTests} / {submissionSummary.totalTests} test cases</span><span>Runtime: {submissionSummary.runtime ? `${Math.round(Number(submissionSummary.runtime) * 1000)} ms` : "0 ms"}</span></div>
                       {submissionSummary.failedTestNumber && <div className="editor-submission-result__failed">Failed on test case {submissionSummary.failedTestNumber}. Hidden test details are not shown.</div>}
                     </div>}
-                    {sampleResults.length > 0 && <SampleResultDetails results={sampleResults} selectedIndex={selectedTestIndex} onSelect={setSelectedTestIndex} />}
+                    {visibleSampleCases.length > 0 && <SampleResultDetails results={visibleSampleCases} hasRun={sampleResults.length > 0} selectedIndex={selectedTestIndex} onSelect={(index) => { setSelectedTestIndex(index); setCustomCaseActive(false); }} customAdded={customCaseAdded} customActive={customCaseActive} customResult={customResult} onSelectCustom={() => setCustomCaseActive(true)} onAddCustom={() => { setCustomCaseAdded(true); setCustomCaseActive(true); }} stdin={stdin} onStdinChange={setStdin} onRunCustom={() => runCode({ custom: true })} isRunning={isRunning} isSubmitting={isSubmitting} />}
+                    {visibleSampleCases.length === 0 && !submissionSummary && <div className="editor-test-empty">No sample test cases are configured for this question.</div>}
                     {sampleResults.length > 0 ? sampleResults.map((item, index) => (
                       <div className={`editor-test-card ${item.passed ? "is-passed" : "is-failed"}`} key={index}>
                         <div className="editor-test-card__header"><strong><span>{item.passed ? "✓" : "×"}</span> Sample {index + 1}</strong><em>{item.passed ? "Passed" : item.result.verdict}</em></div>
@@ -442,16 +487,9 @@ export default function SolveQuestionPage() {
                           <div><label>Your output</label><pre>{item.result.stdout || item.result.stderr || item.result.compileOutput || "(empty)"}</pre></div>
                         </div>
                       </div>
-                    )) : !submissionSummary && <div className="editor-test-empty">Run your code to see test results.</div>}
+                    )) : null}
                   </div>
                 )}
-                <div className="custom-test-case">
-                  <label htmlFor="code-stdin">Custom test case input</label>
-                  <div className="custom-test-case__controls">
-                    <textarea id="code-stdin" value={stdin} onChange={(event) => setStdin(event.target.value)} placeholder="Enter stdin for a custom Run" rows={2} />
-                  <button type="button" className="editor-button editor-button--run" onClick={() => runCode({ custom: true })} disabled={isRunning || isSubmitting}>{isRunning ? "Running…" : "Run custom"}</button>
-                  </div>
-                </div>
               </div>
             </div>
             <footer className="editor-statusbar">
