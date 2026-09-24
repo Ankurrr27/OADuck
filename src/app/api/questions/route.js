@@ -27,6 +27,10 @@ function validateQuestionPayload(body) {
 
 export async function GET() {
   try {
+    const session = await auth();
+    const user = session?.user?.email
+      ? await prisma.user.findUnique({ where: { email: session.user.email }, select: { id: true } })
+      : null;
     const questions = await prisma.question.findMany({
       orderBy: { questionNumber: "asc" },
       select: {
@@ -44,7 +48,23 @@ export async function GET() {
       },
     });
 
-    return Response.json({ success: true, questions });
+    const submissions = user ? await prisma.submission.findMany({
+      where: { userId: user.id, questionId: { not: null } },
+      select: { questionId: true, status: true },
+    }) : [];
+    const progress = submissions.reduce((result, submission) => {
+      const current = result[submission.questionId] || { attempts: 0, solved: false };
+      current.attempts += 1;
+      if (submission.status?.toLowerCase() === "accepted") current.solved = true;
+      result[submission.questionId] = current;
+      return result;
+    }, {});
+    const questionsWithProgress = questions.map((question) => ({
+      ...question,
+      progress: progress[question.id] || { attempts: 0, solved: false },
+    }));
+
+    return Response.json({ success: true, questions: questionsWithProgress });
   } catch (error) {
     console.error("Error fetching questions:", error);
     return Response.json({ success: false, error: "Failed to fetch questions" }, { status: 500 });

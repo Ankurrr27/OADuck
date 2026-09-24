@@ -625,6 +625,29 @@ main > div > section > p:first-child[class*="uppercase"] {
 .assessment-gate__primary { min-height: 2.75rem; border: 0; border-radius: 9px; background: #176a5a; padding: .65rem 1rem; color: #fff; cursor: pointer; font-size: .82rem; font-weight: 750; }
 .assessment-gate__primary:disabled { cursor: wait; opacity: .65; }
 .assessment-gate__note { margin: .8rem 0 0; color: #829087; font-size: .66rem; text-align: right; }
+.assessment-gate-backdrop { padding: .75rem; }
+.assessment-gate { width: min(100%, 44rem); max-height: calc(100dvh - 1.5rem); overflow-y: auto; border-radius: 10px; padding: 1.15rem 1.25rem; }
+.assessment-gate h1 { font-size: 1.8rem; }
+.assessment-gate__intro { margin: .35rem 0 .8rem; font-size: .8rem; line-height: 1.45; }
+.assessment-gate__rules { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+.assessment-gate__rules li { gap: .1rem; border-radius: 6px; padding: .5rem .6rem; }
+.assessment-gate__rules strong { font-size: .73rem; }
+.assessment-gate__rules span, .assessment-gate__fullscreen span { font-size: .68rem; line-height: 1.35; }
+.assessment-gate__rules li:last-child { grid-column: 1 / -1; }
+.assessment-gate__fullscreen { gap: .1rem; margin-top: .55rem; padding: .5rem .6rem; }
+.assessment-gate__fullscreen strong { font-size: .73rem; }
+.assessment-gate__actions { margin-top: .65rem; }
+.assessment-gate__primary { min-height: 2.4rem; border-radius: 6px; padding: .5rem .8rem; font-size: .76rem; }
+.assessment-gate__note { margin-top: .5rem; }
+.editor-toolbar { min-height: 42px; padding: .3rem .55rem; }
+.editor-case-tab { padding: .3rem .5rem; }
+.editor-console { padding: .3rem .5rem; }
+
+@media (max-width: 560px) {
+  .assessment-gate { padding: 1rem; }
+  .assessment-gate__rules { grid-template-columns: 1fr; }
+  .assessment-gate__rules li:last-child { grid-column: auto; }
+}
 .assessment-fullscreen-hold { position: fixed; z-index: 150; inset: 0; display: grid; place-items: center; background: rgba(12, 30, 24, .72); padding: 1rem; }
 .assessment-fullscreen-hold section { width: min(100%, 28rem); border-radius: 15px; background: #fffefa; padding: 1.5rem; text-align: center; }
 .assessment-fullscreen-hold h2 { margin: 0; }

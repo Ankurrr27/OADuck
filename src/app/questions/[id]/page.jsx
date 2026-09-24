@@ -108,8 +108,8 @@ export default function SolveQuestionPage() {
   const [showSolution, setShowSolution] = useState(false);
   const [activeConsoleTab, setActiveConsoleTab] = useState("tests");
   const [isOutputOpen, setIsOutputOpen] = useState(true);
-  const [problemWidth, setProblemWidth] = useState(43);
-  const [consoleHeight, setConsoleHeight] = useState(155);
+  const [problemWidth, setProblemWidth] = useState(40);
+  const [consoleHeight, setConsoleHeight] = useState(132);
 
   useEffect(() => {
     const updateFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
