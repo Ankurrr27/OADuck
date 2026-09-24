@@ -27,7 +27,7 @@ export default async function AdminPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
+    <main className="admin-page min-h-screen bg-[#f5f4ef] text-[#17221e]">
       <AppHeader />
       <div className="flex min-h-[calc(100vh-60px)] ">
         <Sidebar />

@@ -100,7 +100,7 @@ export default function ManageUsersPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
+    <main className="admin-page min-h-screen bg-[#f5f4ef] text-[#17221e]">
       <AppHeader />
       <div className="flex min-h-[calc(100vh-60px)] ">
         <Sidebar />
@@ -146,7 +146,6 @@ export default function ManageUsersPage() {
                     <th style={{ width: "50px" }}></th>
                     <th>User</th>
                     <th>Role</th>
-                    <th>Joined</th>
                     <th style={{ width: "200px" }}>Actions</th>
                   </tr>
                 </thead>
@@ -166,9 +165,6 @@ export default function ManageUsersPage() {
                       </td>
                       <td>
                         <span className={`rounded-full px-2 py-1 text-[10px] font-bold tracking-[.06em] rounded-full px-2 py-1 text-[10px] font-bold tracking-[.06em]-${user.role.toLowerCase()}`} style={{ margin: 0 }}>{user.role}</span>
-                      </td>
-                      <td style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
-                        {new Date(user.createdAt).toLocaleDateString()}
                       </td>
                       <td>
                         <div style={{ display: "flex", gap: "0.5rem" }}>
