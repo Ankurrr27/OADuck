@@ -167,11 +167,19 @@ export async function DELETE(request, { params }) {
       return Response.json({ error: "Question not found" }, { status: 404 });
     }
 
-    await prisma.question.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      // Sessions hold a required FK to the question. Removing them first also
+      // cascades their submissions, violations, hints viewed, and doubt queries.
+      await tx.session.deleteMany({ where: { questionId: id } });
+      await tx.question.delete({ where: { id } });
+    });
 
     return Response.json({ success: true });
   } catch (error) {
     console.error("Error deleting question:", error);
+    if (error?.code === "P2003") {
+      return Response.json({ error: "This question is still referenced by related records and could not be deleted." }, { status: 409 });
+    }
     return Response.json({ success: false, error: "Failed to delete question" }, { status: 500 });
   }
 }

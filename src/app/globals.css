@@ -643,11 +643,27 @@ main > div > section > p:first-child[class*="uppercase"] {
 .editor-case-tab { padding: .3rem .5rem; }
 .editor-console { padding: .3rem .5rem; }
 
+/* Compact admin workspace surfaces consistently. */
+.admin-page > div > section { max-width: 1440px !important; padding: 1.5rem clamp(1.25rem, 3vw, 2.5rem) !important; }
+.admin-page h1 { margin: 0; font-size: clamp(1.5rem, 2.5vw, 2rem); line-height: 1.2; letter-spacing: -.04em; }
+.admin-page h2 { font-size: 1.2rem; line-height: 1.3; letter-spacing: -.025em; }
+.admin-page h1 + p { margin-top: .35rem !important; }
+.admin-page [class*="mt-12"], .admin-page [class*="mt-14"], .admin-page [class*="mt-11"] { margin-top: 1rem !important; }
+.admin-page [style*="margin-bottom: 2rem"] { margin-bottom: 1rem !important; }
+.admin-page [class*="rounded-xl"], .admin-page [class*="rounded-2xl"] { border-radius: 6px !important; }
+.admin-page table th, .admin-page table td { padding: .5rem .7rem !important; }
+.admin-page table { font-size: .82rem !important; }
+.admin-page input:not([type="checkbox"]), .admin-page select { min-height: 2.2rem !important; }
+.admin-page button { min-height: 2.1rem; }
+.admin-page form[style] { padding: 1rem !important; border-radius: 6px !important; }
+.admin-page form { gap: .75rem; }
 @media (max-width: 560px) {
   .assessment-gate { padding: 1rem; }
   .assessment-gate__rules { grid-template-columns: 1fr; }
   .assessment-gate__rules li:last-child { grid-column: auto; }
+  .admin-page > div > section { padding: 1.25rem 1rem !important; }
 }
+
 .assessment-fullscreen-hold { position: fixed; z-index: 150; inset: 0; display: grid; place-items: center; background: rgba(12, 30, 24, .72); padding: 1rem; }
 .assessment-fullscreen-hold section { width: min(100%, 28rem); border-radius: 15px; background: #fffefa; padding: 1.5rem; text-align: center; }
 .assessment-fullscreen-hold h2 { margin: 0; }

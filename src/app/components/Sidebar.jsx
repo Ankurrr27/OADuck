@@ -67,7 +67,7 @@ export default function Sidebar({ compact = false }) {
         onClick={() => setSidebarOpen(false)}
       />
       <aside
-        className={`app-sidebar ${compact ? "app-sidebar--compact" : ""} fixed left-0 top-14 z-20 flex h-[calc(100dvh-3.5rem)] w-[min(300px,86vw)] flex-col overflow-y-auto border-r border-[#dfe1da] bg-[#fbfcf9] p-3 shadow-[16px_0_40px_rgba(23,34,30,.18)] transition-[width,transform] duration-300 ease-out md:sticky md:top-[72px] md:left-auto md:self-start md:h-[calc(100dvh-72px)] md:min-h-0 md:w-[var(--sidebar-width)] md:flex md:flex-col md:overflow-y-auto md:p-3 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
+        className={`app-sidebar ${compact ? "app-sidebar--compact" : ""} fixed left-0 top-14 z-20 flex h-[calc(100dvh-3.5rem)] w-[min(300px,86vw)] flex-col overflow-y-auto border-r border-[#dfe1da] bg-[#fbfcf9] p-3 shadow-[16px_0_40px_rgba(23,34,30,.18)] transition-[width,transform] duration-300 ease-out md:sticky md:top-14 md:left-auto md:shrink-0 md:h-[calc(100dvh-3.5rem)] md:w-[var(--sidebar-width)] md:flex md:flex-col md:overflow-y-auto md:p-3 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
         style={{ "--sidebar-width": `${compact ? 68 : sidebarWidth}px` }}
       >
         {session?.user?.role === "ADMIN" && (

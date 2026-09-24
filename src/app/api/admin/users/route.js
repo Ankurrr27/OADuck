@@ -18,9 +18,8 @@ export async function GET() {
         email: true,
         username: true,
         role: true,
-        createdAt: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { email: "asc" },
     });
 
     return Response.json({ success: true, users });

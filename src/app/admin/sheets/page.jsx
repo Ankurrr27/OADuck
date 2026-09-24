@@ -58,7 +58,7 @@ export default function AdminSheetsPage() {
   const assignedIds = new Set(activeSheet?.sheetQuestions.map(({ question }) => question.id) || []);
   const availableQuestions = questions.filter((question) => !assignedIds.has(question.id));
 
-  return <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]"><AppHeader /><div className="flex min-h-[calc(100vh-60px)]"><Sidebar /><section className="w-full max-w-[900px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-16">
+  return <main className="admin-page min-h-screen bg-[#f5f4ef] text-[#17221e]"><AppHeader /><div className="flex min-h-[calc(100vh-60px)]"><Sidebar /><section className="w-full max-w-[900px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-16">
     <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">Administration</p>
     <h1>Manage sheets</h1>
     <p className="mt-3 text-sm text-[#6f7771]">Create sheets first, then select questions to add. Adding a question never changes a sheet.</p>

@@ -36,7 +36,7 @@ export default function AdminQuestionsPage() {
   }, []);
 
   async function deleteQuestion(id, title) {
-    if (!window.confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+    if (!window.confirm(`Permanently delete "${title}" and all linked practice sessions, submissions, violations, and test data? This action cannot be undone.`)) {
       return;
     }
 
@@ -63,7 +63,7 @@ export default function AdminQuestionsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
+    <main className="admin-page min-h-screen bg-[#f5f4ef] text-[#17221e]">
       <AppHeader />
       <div className="flex min-h-[calc(100vh-60px)] ">
         <Sidebar />
