@@ -10,6 +10,9 @@ export async function POST(request) {
     return Response.json({ error: "Sign in to use Duck Insight." }, { status: 401 });
   }
 
+  let question = null;
+  let optimal = null;
+
   try {
     const body = await request.json();
     if (typeof body.sessionId !== "string" || typeof body.code !== "string" || body.code.length > 50_000) {
@@ -35,16 +38,16 @@ export async function POST(request) {
             optimalSolutions: { orderBy: { language: "asc" }, select: { language: true, code: true } },
           },
         },
-        submissions: { orderBy: { createdAt: "desc" }, take: 1, select: { status: true, sourceCode: true, language: true } },
+        submissions: { orderBy: { createdAt: "desc" }, take: 1, select: { status: true, sourceCode: true, language: true, errorMessage: true } },
       },
     });
     const latest = session?.submissions?.[0];
-    if (!session || !latest || latest.language !== "cpp" || latest.status.toLowerCase() !== "wrong answer" || latest.sourceCode !== body.code) {
+    if (!session || !latest || latest.language !== "cpp" || latest.status.toLowerCase() === "accepted" || latest.sourceCode !== body.code) {
       return Response.json({ error: "Duck Insight is available only for the incorrect code submitted at the end of your assessment." }, { status: 403 });
     }
 
-    const question = session.question;
-    const optimal = question.optimalSolutions.find((solution) => solution.language.toLowerCase() === "cpp" || solution.language.toLowerCase().includes("c++"));
+    question = session.question;
+    optimal = question.optimalSolutions.find((solution) => solution.language.toLowerCase() === "cpp" || solution.language.toLowerCase().includes("c++"));
     const analysis = await analyzeDuckInsight({
       title: question.title || "Untitled problem",
       description: question.description || "Not provided",
@@ -55,15 +58,22 @@ export async function POST(request) {
       expectedSC: question.expectedSC || "Not specified",
       candidateCode: body.code,
       optimalCode: optimal?.code || "",
+      errorStatus: latest.status,
+      errorMessage: latest.errorMessage || "None",
     });
 
     // The analysis is returned directly and is deliberately not written to the database.
-    return Response.json({ analysis });
+    return Response.json({ analysis, optimalCode: optimal?.code || null });
   } catch (error) {
     console.error("Duck Insight failed:", error);
-    const message = error?.message?.includes("OPENAI_API_KEY") || error?.message?.includes("not configured")
+    const message = error?.message?.includes("AI_API_KEY") || error?.message?.includes("not configured")
       ? error.message
-      : "Duck Insight could not generate the analysis right now. Please try again.";
-    return Response.json({ error: message }, { status: 503 });
+      : "Duck Insight could not generate the analysis right now. Please try again later.";
+    return Response.json({ 
+      error: message,
+      optimalCode: optimal?.code || null,
+      expectedTC: question?.expectedTC || "Not specified",
+      expectedSC: question?.expectedSC || "Not specified"
+    }, { status: 503 });
   }
 }
