@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -77,6 +77,7 @@ function SampleResultDetails({ results, hasRun, selectedIndex, onSelect, customA
 
 export default function SolveQuestionPage() {
   const { id } = useParams();
+  const router = useRouter();
   const { data: authSession } = useSession();
   const isAdmin = authSession?.user?.role === "ADMIN";
   const [question, setQuestion] = useState(null);
@@ -303,6 +304,15 @@ export default function SolveQuestionPage() {
     }
   }
 
+  function openDuckInsight() {
+    try {
+      sessionStorage.setItem("oaduck-duck-insight", JSON.stringify({ sessionId: assessment.id, code: submittedCodeRef.current || codeByLanguage[language] }));
+      router.push("/duck-insight");
+    } catch {
+      setEndAssessmentError("Could not prepare Duck Insight in this browser. Please try again.");
+    }
+  }
+
   function resetSolution() {
     const starter = starterCodeForQuestion(question);
     setCodeByLanguage((current) => ({ ...current, cpp: starter }));
@@ -422,13 +432,13 @@ export default function SolveQuestionPage() {
   return (
     <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
       {assessment && <AssessmentMonitor assessmentId={assessment.id} mode={assessment.mode} enabled={!sessionCompleted} violationCount={violationCount} onViolationUpdate={setViolationCount} adminTestMode={adminTestMode} />}
+      {sessionCompleted && <div className="assessment-session-lock" role="alertdialog" aria-modal="true" aria-labelledby="assessment-session-lock-title"><section><span aria-hidden="true">✓</span><h2 id="assessment-session-lock-title">Assessment complete</h2><p>This workspace is locked. Your final submission and session results are saved.</p><nav className="assessment-terminated__actions"><Link href="/" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>Home</Link><Link href="/stats" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>View stats</Link></nav></section></div>}
       {assessment && !isFullscreen && !sessionCompleted && <div className="assessment-fullscreen-hold"><section role="alertdialog" aria-modal="true"><h2>Full screen required</h2><p>Return to full screen to continue your assessment.</p><button type="button" onClick={reenterFullscreen}>Resume full screen</button></section></div>}
       {!assessment && <AssessmentRulesGate mode={assessmentMode} durationMinutes={assessmentDurationMinutes} onBegin={startAssessment} isStarting={isAssessmentStarting} error={assessmentError} rulesReady={assessmentRulesReady} />}
       {completionRequested && !sessionCompleted && <div className="submission-success-backdrop"><section className="submission-success" role="alertdialog" aria-modal="true" aria-labelledby="end-assessment-title"><h2 id="end-assessment-title">Do you want to end the assessment?</h2><p className="submission-success__name">Your current code will be submitted before the assessment closes. You will then see your results and can go to Home or Stats.</p>{endAssessmentError && <p className="assessment-gate__error" role="alert">{endAssessmentError}</p>}<div className="assessment-completion-actions"><button type="button" className="submission-success__button" onClick={() => setCompletionRequested(false)} disabled={isEndingAssessment}>Keep working</button><button type="button" className="submission-success__button" onClick={confirmEndAssessment} disabled={isEndingAssessment}>{isEndingAssessment ? "Submitting and ending…" : "Yes, submit and end"}</button></div></section></div>}
       {showSuccessDialog && submissionSummary && (
-        <div className="submission-success-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowSuccessDialog(false); }}>
-          <section className="submission-success" role="dialog" aria-modal="true" aria-labelledby="submission-success-title">
-            <button className="submission-success__close" type="button" onClick={() => setShowSuccessDialog(false)} aria-label="Close submission summary">×</button>
+        <div className="submission-success-backdrop submission-success-backdrop--completed">
+          <section className="submission-success submission-success--completed" role="dialog" aria-modal="true" aria-labelledby="submission-success-title">
             <div className={`submission-success__icon ${submissionWrongAnswer ? "submission-success__icon--failed" : submissionPassed ? "" : "submission-success__icon--neutral"}`} aria-hidden="true">{submissionPassed ? "\u2713" : submissionWrongAnswer ? "\u00d7" : "!"}</div>
             <p className="submission-success__eyebrow">Problem {submissionSummary.questionNumber || question.questionNumber} · {submissionSummary.status}</p>
             <h2 id="submission-success-title">{sessionCompleted ? "Assessment ended" : "Submission results"}</h2>
@@ -443,14 +453,14 @@ export default function SolveQuestionPage() {
             </div>
             <div className="assessment-completion-extra"><span>Violations this session</span><strong>{violationCount}</strong></div>
             <p className="assessment-completion-note">{sessionCompleted ? "Your session results and violation total have been saved to Stats." : completionRequested ? "Review your final submission, then confirm to close the assessment." : "Your session is still active. Submit again after editing, or end the assessment when you are ready."}</p>
-            {sessionCompleted ? <div className="assessment-completion-actions"><Link href="/" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>Home</Link><Link href="/stats" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>View stats</Link></div> : <div className="assessment-completion-actions">{completionRequested ? <button type="button" className="submission-success__button" onClick={confirmEndAssessment} disabled={isEndingAssessment}>{isEndingAssessment ? "Ending assessment…" : "Confirm end assessment"}</button> : <button type="button" className="submission-success__button" onClick={() => setShowSuccessDialog(false)}>Continue assessment</button>}</div>}
+            {sessionCompleted ? <div className="assessment-completion-actions">{submissionWrongAnswer && <button type="button" className="submission-success__button submission-success__button--insight" onClick={openDuckInsight}>Duck insight</button>}<Link href="/" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>Home</Link><Link href="/stats" className="submission-success__button" onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }}>View stats</Link></div> : <div className="assessment-completion-actions">{completionRequested ? <button type="button" className="submission-success__button" onClick={confirmEndAssessment} disabled={isEndingAssessment}>{isEndingAssessment ? "Ending assessment…" : "Confirm end assessment"}</button> : <button type="button" className="submission-success__button" onClick={() => setShowSuccessDialog(false)}>Continue assessment</button>}</div>}
           </section>
         </div>
       )}
       <AppHeader assessmentTimer={assessment ? { startedAt: assessment.startedAt, durationMinutes: assessment.durationMinutes } : null} />
       <div className="solve-shell">
         {!assessment && <Sidebar compact />}
-        <div className="solve-workspace solve-workspace--resizable" style={{ "--problem-width": `${problemWidth}%` }}>
+        <div className="solve-workspace solve-workspace--resizable" inert={sessionCompleted} style={{ "--problem-width": `${problemWidth}%` }}>
           <section className="problem-panel" onWheel={scrollProblemWithWheel} tabIndex={0}>
             <div className="problem-panel__heading">
               <span className="problem-panel__eyebrow">Problem {question.questionNumber}</span>
