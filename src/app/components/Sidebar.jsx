@@ -118,14 +118,6 @@ export default function Sidebar({ compact = false }) {
                 <LibraryIcon />
                 <span>Library</span>
               </Link>
-              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/stats" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/stats" title="View stats" onClick={() => setSidebarOpen(false)}>
-                <StatsIcon />
-                <span>Stats</span>
-              </Link>
-              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/how-to-use" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/how-to-use" title="How to use OA Duck" onClick={() => setSidebarOpen(false)}>
-                <HelpIcon />
-                <span>How to use</span>
-              </Link>
               <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname.startsWith("/profile") ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href={profileUrl} title="Edit profile" onClick={() => setSidebarOpen(false)}>
                 <ProfileIcon />
                 <span>Profile</span>
@@ -160,20 +152,12 @@ function ProfileIcon() {
   return <svg className="h-5 w-5 shrink-0 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.8-3.4 3.1-5 7-5s6.2 1.6 7 5" /></svg>;
 }
 
-function StatsIcon() {
-  return <svg className="h-5 w-5 shrink-0 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 19V9M12 19V5M19 19v-7" /></svg>;
-}
-
 function PracticeIcon() {
   return <svg className="h-5 w-5 shrink-0 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /><path d="M4 4h16v16H4z" /></svg>;
 }
 
 function LibraryIcon() {
   return <svg className="h-5 w-5 shrink-0 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4" /></svg>;
-}
-
-function HelpIcon() {
-  return <svg className="h-5 w-5 shrink-0 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M9.7 9a2.4 2.4 0 1 1 3.9 1.8c-.9.7-1.6 1.1-1.6 2.4M12 16.5h.01" /></svg>;
 }
 
 function LogoutIcon() {

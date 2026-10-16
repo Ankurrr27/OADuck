@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import BrandLogo from "./BrandLogo";
 
 export default function AuthForm({ initialMode = "login" }) {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isRegistering = initialMode === "register";
@@ -55,7 +57,7 @@ export default function AuthForm({ initialMode = "login" }) {
         return;
       }
 
-      window.location.assign("/");
+      router.push("/practice");
     } catch {
       setMessage("Something went wrong. Please try again.");
     } finally {
@@ -64,7 +66,7 @@ export default function AuthForm({ initialMode = "login" }) {
   }
 
   function handleGoogle() {
-    signIn("google", { callbackUrl: "/" });
+    signIn("google", { callbackUrl: "/practice" });
   }
 
   return (

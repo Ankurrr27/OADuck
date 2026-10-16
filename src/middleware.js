@@ -70,8 +70,6 @@ export const config = {
     "/profile/:path*",
     "/practice/:path*",
     "/questions/:path*",
-    "/stats/:path*",
-    "/how-to-use/:path*",
     "/setup-password",
   ],
 };
