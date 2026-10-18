@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import AppHeader from "../../components/AppHeader";
 import Sidebar from "../../components/Sidebar";
-import EditProfile from "../EditProfile";
+import DuckLoader from "../../components/DuckLoader";
+import ProfileDashboard from "../ProfileDashboard";
 
 export default function PublicProfilePage() {
   const { username } = useParams();
@@ -41,9 +42,8 @@ export default function PublicProfilePage() {
         <AppHeader />
         <div className="flex min-h-[calc(100dvh-3.5rem)]">
           <Sidebar />
-          <section className="mx-auto w-full max-w-[1120px] flex-1 px-[clamp(20px,3vw,40px)] py-6">
-            <h1 className="m-0 text-2xl font-semibold tracking-[-.04em] text-[#123f36]">Profile</h1>
-            <p className="mt-2 text-sm text-[#6f7771]">Loading profile…</p>
+          <section className="grid w-full flex-1 place-items-center px-4 py-6">
+            <DuckLoader label="Loading your profile…" />
           </section>
         </div>
       </main>
@@ -54,7 +54,7 @@ export default function PublicProfilePage() {
   const isOwnProfile = displayUsername?.toLowerCase() === username?.toLowerCase();
 
   if (isOwnProfile) {
-    return <EditProfile />;
+    return <ProfileDashboard />;
   }
 
   if (error || !user) {

@@ -1,70 +1,123 @@
-import Link from "next/link";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "../components/Sidebar";
 import AppHeader from "../components/AppHeader";
 
+const difficulties = ["Any difficulty", "Easy", "Medium", "Hard"];
+
 export default function PracticePage() {
+  const router = useRouter();
+  const [questions, setQuestions] = useState([]);
+  const [topic, setTopic] = useState("Any topic");
+  const [difficulty, setDifficulty] = useState("Any difficulty");
+  const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    async function loadQuestions() {
+      try {
+        const response = await fetch("/api/questions");
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.error || "Could not load questions.");
+        if (active) setQuestions(result.questions);
+      } catch (loadError) {
+        if (active) setError(loadError.message || "Could not load questions.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadQuestions();
+    return () => { active = false; };
+  }, []);
+
+  const topics = [...new Set(questions.flatMap((question) => question.topics || []))].sort((a, b) => a.localeCompare(b));
+
+  function startPractice(event) {
+    event.preventDefault();
+    const matchingQuestions = questions.filter((question) =>
+      (topic === "Any topic" || question.topics?.includes(topic))
+      && (difficulty === "Any difficulty" || question.difficulty === difficulty),
+    );
+
+    if (!matchingQuestions.length) {
+      setError("No questions match those choices. Try another topic or difficulty.");
+      return;
+    }
+
+    const question = matchingQuestions[Math.floor(Math.random() * matchingQuestions.length)];
+    setStarting(true);
+    router.push(`/questions/${question.id}`);
+  }
+
+  const selectClass = "min-h-12 w-full rounded-md border border-white/20 bg-[#0c342d] px-3.5 text-base text-white outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-300/20";
+
   return (
     <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
       <AppHeader />
-      <div className="flex min-h-[calc(100vh-60px)]">
+      <div className="flex min-h-[calc(100dvh-3.5rem)]">
         <Sidebar />
-        <section className="w-full max-w-[1440px] flex-1 mx-auto px-[clamp(20px,3vw,40px)] py-7">
-          <div className="page-hero relative overflow-hidden rounded-md bg-[#123f36] px-5 py-5 text-[#f7f5ed] sm:px-6 sm:py-6">
-            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="max-w-2xl">
-                <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#f5c75d]">Practice</p>
-                <h1 className="mt-1.5 text-2xl font-semibold tracking-[-.04em] sm:text-3xl">A focused hour starts with one good question.</h1>
-                <p className="mt-2 max-w-xl text-sm leading-5 text-[#d3e0d8]">Pick a problem, work at your pace, and build the kind of repetition that makes interviews feel familiar.</p>
-              </div>
-              <Link className="inline-flex min-h-9 shrink-0 items-center gap-2 self-start rounded-md bg-[#f5c75d] px-4 py-2 text-xs font-bold text-[#123f36] no-underline transition hover:bg-[#f8d479] sm:self-center" href="/practice/session">Start practice <span aria-hidden="true">→</span></Link>
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <PracticeStat value="0" label="Questions solved" detail="Your first solve starts here" />
-            <PracticeStat value="0" label="Sessions completed" detail="Small sessions add up" />
-            <PracticeStat value="0 days" label="Current streak" detail="Come back tomorrow" />
-          </div>
-
-          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,.75fr)]">
-            <section className="rounded-md border border-[#dfe1da] bg-[#fffefa] p-4">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[.12em] text-[#a07725]">Recommended</p>
-                  <h2 className="mt-1 text-xl font-semibold tracking-[-.035em]">Start fresh</h2>
-                  <p className="mt-1.5 max-w-lg text-sm leading-5 text-[#6f7771]">We’ll prepare a new problem for this session so you can concentrate on the solution, not the setup.</p>
+        <section className="flex w-full flex-1">
+          <div className="relative isolate flex min-h-[calc(100dvh-3.5rem)] w-full items-center overflow-hidden bg-[#123f36] px-5 py-8 text-white sm:px-9 sm:py-10 lg:px-12">
+            <div className="pointer-events-none absolute -right-[450px] top-1/2 z-0 h-[1120px] w-[1120px] -translate-y-1/2 rounded-full bg-[#123f36] max-md:-right-[200px] max-md:h-[620px] max-md:w-[620px]" aria-hidden="true">
+              <div className="absolute inset-[40px] rounded-full bg-[#17483e] max-md:inset-[20px]">
+                <div className="absolute inset-[40px] rounded-full bg-[#1b5145] max-md:inset-[20px]">
+                  <div className="absolute inset-[40px] rounded-full bg-[#205a4d] max-md:inset-[20px]">
+                    <div className="absolute inset-[40px] rounded-full bg-[#286756] max-md:inset-[20px]">
+                      <div className="absolute inset-[40px] rounded-full bg-[#337764] max-md:inset-[20px]">
+                        <div className="absolute inset-[40px] rounded-full bg-[#438774] max-md:inset-[20px]">
+                          <div className="absolute inset-[40px] rounded-full bg-[#579783] max-md:inset-[20px]">
+                            <div className="absolute inset-[40px] rounded-full bg-[#6fa895] max-md:inset-[20px]">
+                              <div className="absolute inset-[40px] rounded-full bg-[#8bbdab] max-md:inset-[20px]">
+                                <div className="absolute inset-[40px] rounded-full bg-[#9ccab7] max-md:inset-[20px]">
+                                  <div className="absolute inset-[40px] rounded-full bg-[#b0d6c5] max-md:inset-[20px]">
+                                    <div className="absolute inset-[40px] rounded-full bg-[#c6e4d3] max-md:inset-[20px]">
+                                      <div className="absolute inset-[40px] rounded-full bg-[#cde5d9] max-md:inset-[20px]" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#e8f1eb] text-xl" aria-hidden="true">✦</span>
               </div>
-              <div className="mt-4 grid gap-3 border-t border-[#e8ebe5] pt-3 sm:grid-cols-3">
-                <SessionRule title="One problem" detail="A single clear goal" />
-                <SessionRule title="Your pace" detail="No timer, no pressure" />
-                <SessionRule title="Hints on demand" detail="Use them when ready" />
-              </div>
-              <Link className="mt-4 inline-flex min-h-9 items-center justify-center rounded-md bg-[#123f36] px-3.5 py-2 text-xs font-semibold text-[#f7f5ed] no-underline transition hover:bg-[#176a5a]" href="/practice/session">Begin with a new question</Link>
-            </section>
+            </div>
 
-            <aside className="rounded-md border border-[#dfe1da] bg-[#fffefa] p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[.12em] text-[#a07725]">In progress</p>
-              <h2 className="mt-2 text-xl font-semibold tracking-[-.03em]">Your desk is clear.</h2>
-              <p className="mt-2 text-sm leading-6 text-[#6f7771]">When you pause a session, it will wait here until you are ready to return.</p>
-              <div className="mt-6 rounded-xl border border-dashed border-[#cbd6ce] bg-[#f6f8f4] p-4 text-center">
-                <span className="text-2xl" aria-hidden="true">☕</span>
-                <p className="mt-2 text-xs font-semibold text-[#526057]">No unfinished sessions</p>
-              </div>
-              <Link className="mt-5 inline-flex text-sm font-semibold text-[#176a5a] underline decoration-[#a9c8b7] underline-offset-4" href="/questions">Browse the library</Link>
-            </aside>
+            <div className="relative z-10 w-full max-w-4xl">
+              <h1 className="m-0 text-5xl font-semibold leading-tight text-white sm:text-6xl">Start your practice.</h1>
+              <p className="mb-0 mt-4 max-w-none text-lg leading-8 text-emerald-100 sm:mt-5 sm:text-2xl">Randomly pick any topic or difficulty to start practice.</p>
+
+              <form className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end" onSubmit={startPractice}>
+                <label className="grid gap-2 text-sm font-semibold text-emerald-50">
+                  Topic
+                  <select className={selectClass} style={{ color: "#f7f5ed", backgroundColor: "#0c342d" }} value={topic} onChange={(event) => { setTopic(event.target.value); setError(""); }} disabled={loading || starting}>
+                    <option style={{ color: "#17221e", backgroundColor: "#fffefa" }}>Any topic</option>
+                    {topics.map((value) => <option style={{ color: "#17221e", backgroundColor: "#fffefa" }} key={value}>{value}</option>)}
+                  </select>
+                </label>
+                <label className="grid gap-2 text-sm font-semibold text-emerald-50">
+                  Difficulty
+                  <select className={selectClass} style={{ color: "#f7f5ed", backgroundColor: "#0c342d" }} value={difficulty} onChange={(event) => { setDifficulty(event.target.value); setError(""); }} disabled={loading || starting}>
+                    {difficulties.map((value) => <option style={{ color: "#17221e", backgroundColor: "#fffefa" }} key={value}>{value}</option>)}
+                  </select>
+                </label>
+                <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-[#f7f5ed] px-6 text-base font-bold text-[#123f36] transition hover:bg-white disabled:cursor-wait disabled:opacity-70 sm:px-7" type="submit" disabled={loading || starting || !questions.length}>
+                  {loading ? "Loading…" : starting ? "Starting…" : "Start practice"}<span aria-hidden="true">→</span>
+                </button>
+              </form>
+
+              {error && <p className="mb-0 mt-4 rounded-md border border-rose-200/25 bg-rose-950/20 px-3 py-2 text-xs text-rose-100" role="alert">{error}</p>}
+            </div>
           </div>
         </section>
       </div>
     </main>
   );
-}
-
-function PracticeStat({ value, label, detail }) {
-  return <div className="rounded-xl border border-[#dfe1da] bg-[#fffefa] px-5 py-4 shadow-sm"><p className="text-2xl font-semibold tracking-[-.04em] text-[#123f36]">{value}</p><p className="mt-1 text-sm font-semibold text-[#36433b]">{label}</p><p className="mt-1 text-xs text-[#7b867e]">{detail}</p></div>;
-}
-
-function SessionRule({ title, detail }) {
-  return <div><p className="text-xs font-bold text-[#36433b]">{title}</p><p className="mt-1 text-xs text-[#7b867e]">{detail}</p></div>;
 }

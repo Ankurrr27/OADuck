@@ -93,13 +93,13 @@ export function useAssessmentMonitoring({ assessmentId, mode, enabled, onTermina
   return { notice, terminated, clearNotice: () => setNotice(null) };
 }
 
-export default function AssessmentMonitor({ assessmentId, mode, enabled, onTerminated, onViolationUpdate, violationCount = 0, adminTestMode = false }) {
+export default function AssessmentMonitor({ assessmentId, mode, enabled, onTerminated, onViolationUpdate, violationCount = 0, adminTestMode = false, profileHref = "/" }) {
   const { notice, terminated, clearNotice } = useAssessmentMonitoring({ assessmentId, mode, enabled, onTerminated, onViolationUpdate });
   const leaveFullscreen = () => {
     if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
   };
   if (terminated) {
-    return <div className="assessment-terminated" role="alert"><section><span aria-hidden="true">!</span><h1>Assessment Terminated</h1><p>{notice?.type === "FULLSCREEN_EXIT" ? "You exited full screen. This session was terminated immediately." : "This assessment has ended because its violation limit was reached. Code submissions are disabled."}</p><p className="assessment-terminated__count">Violations in this session: <strong>{violationCount}</strong></p><nav className="assessment-terminated__actions"><Link href="/" onClick={leaveFullscreen}>Home</Link><Link href="/stats" onClick={leaveFullscreen}>View stats</Link></nav></section></div>;
+    return <div className="assessment-terminated" role="alert"><section><span aria-hidden="true">!</span><h1>Assessment Terminated</h1><p>{notice?.type === "FULLSCREEN_EXIT" ? "You exited full screen. This session was terminated immediately." : "This assessment has ended because its violation limit was reached. Code submissions are disabled."}</p><p className="assessment-terminated__count">Violations in this session: <strong>{violationCount}</strong></p><nav className="assessment-terminated__actions"><Link href="/" onClick={leaveFullscreen}>Home</Link><Link href={profileHref} onClick={leaveFullscreen}>View profile</Link></nav></section></div>;
   }
   if (!notice) return null;
   const nextTerminates = notice.mode === "STRICT" || notice.count >= notice.max - 1;
