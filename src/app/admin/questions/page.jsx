@@ -105,7 +105,6 @@ export default function AdminQuestionsPage() {
                     <th className="w-12.5">#</th>
                     <th>Title</th>
                     <th>Difficulty</th>
-                    <th>Source</th>
                     <th style={{ width: "150px" }}>Actions</th>
                   </tr>
                 </thead>
@@ -120,13 +119,6 @@ export default function AdminQuestionsPage() {
                         <span className="inline-block rounded-full px-2.5 py-0.5 text-[.78rem] font-semibold" style={{ background: `${difficultyColor[q.difficulty]}18`, color: difficultyColor[q.difficulty], margin: 0 }}>
                           {q.difficulty}
                         </span>
-                      </td>
-                      <td className="text-center">
-                        {q.source === "leetcode" ? (
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[#ffa1161a] text-[.7rem] font-bold text-[#ffa116]">LC</span>
-                        ) : (
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[#123f36]/10 text-[.7rem] font-bold text-[#123f36]">OA</span>
-                        )}
                       </td>
                       <td>
                         <div style={{ display: "flex", gap: "0.5rem" }}>

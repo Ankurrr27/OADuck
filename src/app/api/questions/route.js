@@ -3,16 +3,7 @@ export const runtime = "nodejs";
 import { auth } from "../../../auth";
 import prisma from "../../../lib/prisma";
 
-const VALID_SOURCES = new Set(["leetcode", "gfg", "admin"]);
-
 function validateQuestionPayload(body) {
-  const source = body.source || "admin";
-  if (!VALID_SOURCES.has(source)) {
-    return "Source must be leetcode, gfg, or admin";
-  }
-  if ((source === "leetcode" || source === "gfg") && !body.sourceUrl?.trim()) {
-    return "A source URL is required for LeetCode and GFG questions";
-  }
   if (!body.title?.trim() || !body.difficulty?.trim()) {
     return "Title and difficulty are required";
   }
@@ -39,9 +30,6 @@ export async function GET() {
         title: true,
         difficulty: true,
         topics: true,
-        source: true,
-        sourceUrl: true,
-        leetcodeSlug: true,
         expectedTC: true,
         expectedSC: true,
         createdBy: { select: { id: true, name: true, email: true } },
@@ -88,10 +76,6 @@ export async function POST(request) {
       topics,
       examples,
       constraints,
-      source,
-      sourceUrl,
-      leetcodeSlug,
-      leetcodeId,
       testCases,
       expectedTC,
       expectedSC,
@@ -122,12 +106,8 @@ export async function POST(request) {
         topics: topics || [],
         examples: examples || [],
         constraints: constraints || [],
-        source,
-        sourceUrl: sourceUrl?.trim() || null,
         expectedTC: expectedTC?.trim() || null,
         expectedSC: expectedSC?.trim() || null,
-        leetcodeSlug,
-        leetcodeId,
         createdById: dbUser.id,
         hints: Array.isArray(hints) ? {
           create: hints.filter((hint) => hint?.content?.trim()).map((hint, index) => ({

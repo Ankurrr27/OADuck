@@ -476,11 +476,6 @@ export default function SolveQuestionPage() {
               {question.topics?.map(t => (
                 <span className="topic-badge" key={t}>{t}</span>
               ))}
-              {question.sourceUrl && (
-                <a className="source-link" href={question.sourceUrl} target="_blank" rel="noopener noreferrer">
-                  View Original Source â†—
-                </a>
-              )}
             </div>
 
             <div

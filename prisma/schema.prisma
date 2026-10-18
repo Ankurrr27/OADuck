@@ -22,7 +22,6 @@ model User {
   image        String?
   role         Role         @default(USER)
   questions    Question[]
-  sheets       Sheet[]
   sessions     Session[]
   submissions  Submission[]
 
@@ -38,12 +37,8 @@ model Question {
   topics         String[]
   examples       Json?
   constraints    Json?
-  source         String?  @default("leetcode")
-  sourceUrl      String?
   expectedTC     String?  @map("expected_tc")
   expectedSC     String?  @map("expected_sc")
-  leetcodeSlug   String?
-  leetcodeId     String?
 
   createdById      String            @map("created_by") @db.Uuid
   createdBy        User              @relation(fields: [createdById], references: [id])
@@ -51,30 +46,9 @@ model Question {
   sessions         Session[]
   testCases        TestCase[]
   optimalSolutions OptimalSolution[]
-  sheetQuestions   SheetQuestion[]
   submissions      Submission[]
 
   @@map("question")
-}
-
-model Sheet {
-  id             String          @id @default(uuid()) @db.Uuid
-  name           String
-  createdById    String          @map("created_by") @db.Uuid
-  createdBy      User            @relation(fields: [createdById], references: [id])
-  sheetQuestions SheetQuestion[]
-
-  @@map("sheet")
-}
-
-model SheetQuestion {
-  sheetId    String   @map("sheet_id") @db.Uuid
-  questionId String   @map("question_id") @db.Uuid
-  sheet      Sheet    @relation(fields: [sheetId], references: [id], onDelete: Cascade)
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@id([sheetId, questionId])
-  @@map("sheet_question")
 }
 
 model TestCase {

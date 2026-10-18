@@ -95,17 +95,9 @@ export default function Sidebar({ compact = false }) {
                 <LibraryIcon />
                 <span>Manage Questions</span>
               </Link>
-              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/sheets" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/sheets" title="Manage sheets" onClick={() => setSidebarOpen(false)}>
-                <LibraryIcon />
-                <span>Manage Sheets</span>
-              </Link>
               <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/questions/new" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/questions/new" title="Add question" onClick={() => setSidebarOpen(false)}>
                 <AddIcon />
                 <span>Add Question</span>
-              </Link>
-              <Link className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-xs font-semibold text-[#6f7771] transition-all hover:translate-x-0.5 hover:bg-[#edf2ee] hover:text-[#123f36] ${pathname === "/admin/new-admin" ? "bg-[#e8f1eb] text-[#123f36] shadow-[inset_3px_0_0_#f5c75d]" : ""}`} href="/admin/new-admin" title="Add admin" onClick={() => setSidebarOpen(false)}>
-                <AddUserIcon />
-                <span>Add Admin</span>
               </Link>
             </>
           ) : (
@@ -176,6 +168,3 @@ function UsersIcon() {
   return <svg className="h-5 w-5 shrink-0" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 }
 
-function AddUserIcon() {
-  return <svg className="h-5 w-5 shrink-0" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>;
-}

@@ -55,4 +55,4 @@ OA Duck bridges the gap between casual coding practice and high-stakes company o
 ### 6. ⚙️ Admin Management Suite
 - **Question Creation & Editing:** Add new problems with custom descriptions, constraints, hints, and sample/hidden test cases.
 - **Optimal Solution Repository:** Store and manage reference solutions for every problem.
-- **User & Content Administration:** Oversee registered users, assign roles, and manage curated problem sheets.
+- **User & Content Administration:** Oversee registered users, assign roles, and manage the problem library.
