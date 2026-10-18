@@ -33,10 +33,6 @@ export default function EditQuestionPage() {
   const [questionNumber, setQuestionNumber] = useState(0);
 
   // Meta state
-  const [sourceUrl, setSourceUrl] = useState("");
-  const [source, setSource] = useState("");
-  const [leetcodeSlug, setLeetcodeSlug] = useState("");
-  const [leetcodeId, setLeetcodeId] = useState("");
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -73,10 +69,6 @@ export default function EditQuestionPage() {
         setTestCases(q.testCases || []);
         setOptimalSolutions(q.optimalSolutions || []);
         setQuestionNumber(q.questionNumber);
-        setSourceUrl(q.sourceUrl || "");
-        setSource(q.source || "");
-        setLeetcodeSlug(q.leetcodeSlug || "");
-        setLeetcodeId(q.leetcodeId || "");
       } catch (err) {
         setLoadError("Failed to load question.");
       } finally {
@@ -118,10 +110,6 @@ export default function EditQuestionPage() {
         topics: topics ? topics.split(",").map(t => t.trim()).filter(Boolean) : [],
         examples: parsedExamples,
         constraints: parsedConstraints,
-        source: source || "admin",
-        sourceUrl,
-        leetcodeSlug,
-        leetcodeId,
         testCases: testCases.map(({ id, input, expectedOutput, isSample }) => ({ id, input, expectedOutput, isSample })),
         expectedTC,
         expectedSC,
@@ -186,11 +174,11 @@ export default function EditQuestionPage() {
 
   if (loadError) {
     return (
-      <main className="admin-page min-h-screen bg-[#f5f4ef] text-[#17221e]">
+      <main className="admin-page admin-create-page min-h-screen bg-[#f5f7f8] text-[#17221e]">
         <AppHeader />
         <div className="flex min-h-[calc(100vh-60px)] ">
           <Sidebar />
-          <section className="w-full max-w-[900px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19 max-w-[1120px]" style={{ maxWidth: "800px" }}>
+          <section className="admin-create-content w-full max-w-[1440px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19">
             <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">
               <Link href="/questions" style={{ textDecoration: "none", color: "inherit" }}>&larr; Back to Library</Link>
             </p>
@@ -204,24 +192,26 @@ export default function EditQuestionPage() {
   }
 
   return (
-    <main className="admin-page min-h-screen bg-[#f5f4ef] text-[#17221e]">
+    <main className="admin-page admin-create-page min-h-screen bg-[#f5f7f8] text-[#17221e]">
       <AppHeader />
       <div className="flex min-h-[calc(100vh-60px)] ">
         <Sidebar />
-        <section className="w-full max-w-[900px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19 max-w-[1120px]" style={{ maxWidth: "800px" }}>
+          <section className="admin-create-content w-full max-w-[1440px] flex-1 mx-auto px-[clamp(24px,4vw,56px)] py-19">
           <p className="mb-3 text-xs font-bold uppercase tracking-[.12em] text-[#a07725]">
             <Link href="/questions" style={{ textDecoration: "none", color: "inherit" }}>&larr; Back to Library</Link>
           </p>
 
-          <div style={{ marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div className="admin-create-header" style={{ marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
+              <p className="admin-eyebrow">Problem library</p>
               <h1>Edit question #{questionNumber}</h1>
-              <p className="mt-4 text-sm text-[#6f7771]">Update the manually maintained question details.</p>
+              <p className="mt-2 text-sm text-[#6f7771]">Update the question details, solutions, and test cases.</p>
             </div>
+            <div className="admin-create-steps" aria-label="Question edit sections"><span className="is-active"><b>01</b> Details</span><span><b>02</b> Content</span><span><b>03</b> Solutions</span><span><b>04</b> Tests</span></div>
           </div>
 
 
-          <form className="mt-11 grid max-w-[560px] gap-[18px] [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-semibold [&_label]:text-[#505a53] [&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-[#d7dad3] [&_input]:bg-[#fffefa] [&_input]:px-3 [&_textarea]:w-full [&_textarea]:rounded-md [&_textarea]:border [&_textarea]:border-[#d7dad3] [&_textarea]:bg-[#fffefa] [&_textarea]:p-3" onSubmit={handleSave}>
+          <form className="admin-edit-form mt-4 grid gap-[18px] [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-semibold [&_label]:text-[#505a53] [&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-[#d7dad3] [&_input]:bg-[#fffefa] [&_input]:px-3 [&_textarea]:w-full [&_textarea]:rounded-md [&_textarea]:border [&_textarea]:border-[#d7dad3] [&_textarea]:bg-[#fffefa] [&_textarea]:p-3" onSubmit={handleSave}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <label>
                 Title
@@ -246,32 +236,6 @@ export default function EditQuestionPage() {
             <label>
               Topics (comma-separated)
               <input value={topics} onChange={(e) => setTopics(e.target.value)} placeholder="Array, Hash Table" />
-            </label>
-
-            <label>
-              Source
-              <select value={source || "admin"} onChange={(e) => setSource(e.target.value)}>
-                <option value="admin">Admin</option>
-                <option value="leetcode">LeetCode</option>
-                <option value="gfg">GeeksforGeeks</option>
-              </select>
-            </label>
-
-            <label>
-              Source URL
-              <input value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} required={source !== "admin"} placeholder="https://..." />
-            </label>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-              <label>
-                LeetCode slug
-                <input value={leetcodeSlug} onChange={(e) => setLeetcodeSlug(e.target.value)} placeholder="two-sum" />
-              </label>
-            </div>
-
-            <label>
-              LeetCode ID
-              <input value={leetcodeId} onChange={(e) => setLeetcodeId(e.target.value)} placeholder="1" />
             </label>
 
             <label>

@@ -3,8 +3,6 @@ export const runtime = "nodejs";
 import { auth } from "../../../../auth";
 import prisma from "../../../../lib/prisma";
 
-const VALID_SOURCES = new Set(["leetcode", "gfg", "admin"]);
-
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
@@ -23,10 +21,6 @@ export async function GET(request, { params }) {
         topics: true,
         examples: true,
         constraints: true,
-        source: true,
-        sourceUrl: true,
-        leetcodeSlug: true,
-        leetcodeId: true,
         testCases: {
           where: canViewHiddenTests ? {} : { isSample: true },
           orderBy: { id: "asc" },
@@ -68,10 +62,6 @@ export async function PUT(request, { params }) {
       topics,
       examples,
       constraints,
-      source,
-      sourceUrl,
-      leetcodeSlug,
-      leetcodeId,
       testCases,
       expectedTC,
       expectedSC,
@@ -79,15 +69,8 @@ export async function PUT(request, { params }) {
       optimalSolutions,
     } = body;
 
-    const sourceValue = source || "admin";
     if (!title?.trim() || !difficulty?.trim()) {
       return Response.json({ error: "Title and difficulty are required" }, { status: 400 });
-    }
-    if (!VALID_SOURCES.has(sourceValue)) {
-      return Response.json({ error: "Source must be leetcode, gfg, or admin" }, { status: 400 });
-    }
-    if ((sourceValue === "leetcode" || sourceValue === "gfg") && !sourceUrl?.trim()) {
-      return Response.json({ error: "A source URL is required for LeetCode and GFG questions" }, { status: 400 });
     }
     if (Array.isArray(hints) && hints.filter((hint) => hint?.content?.trim()).length > 2) {
       return Response.json({ error: "A question can have at most two hints" }, { status: 400 });
@@ -111,12 +94,8 @@ export async function PUT(request, { params }) {
         topics: topics || [],
         examples: examples || [],
         constraints: constraints || [],
-        source: sourceValue,
-        sourceUrl: sourceUrl?.trim() || null,
         expectedTC: expectedTC?.trim() || null,
         expectedSC: expectedSC?.trim() || null,
-        leetcodeSlug,
-        leetcodeId,
         },
       });
 

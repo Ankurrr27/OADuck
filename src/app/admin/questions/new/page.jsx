@@ -9,10 +9,10 @@ import { parseLeetCodeExamples } from "@/lib/leetcodeExamples";
 
 export default function NewQuestionPage() {
   const router = useRouter();
-  const fieldClass = "grid min-w-0 content-start gap-1 text-xs font-semibold text-[#526057]";
-  const inputClass = "min-h-9 w-full rounded-md border border-[#d7dfd8] bg-white px-2.5 text-[13px] font-normal text-[#24352d] outline-none placeholder:text-[#a0aaa2] focus:border-[#6d9b86] focus:ring-2 focus:ring-[#176a5a]/10";
-  const textareaClass = "w-full resize-y rounded-md border border-[#d7dfd8] bg-white px-2.5 py-2 text-[13px] leading-5 text-[#24352d] outline-none placeholder:text-[#a0aaa2] focus:border-[#6d9b86] focus:ring-2 focus:ring-[#176a5a]/10";
-  const sectionClass = "min-w-0 rounded-lg border border-[#dfe1da] bg-[#fffefa] p-4";
+  const fieldClass = "admin-create-field grid min-w-0 content-start gap-1 text-xs font-semibold text-[#526057]";
+  const inputClass = "admin-create-input min-h-9 w-full rounded-md border border-[#d7dfd8] bg-white px-2.5 text-[13px] font-normal text-[#24352d] outline-none placeholder:text-[#a0aaa2] focus:border-[#6d9b86] focus:ring-2 focus:ring-[#176a5a]/10";
+  const textareaClass = "admin-create-input w-full resize-y rounded-md border border-[#d7dfd8] bg-white px-2.5 py-2 text-[13px] leading-5 text-[#24352d] outline-none placeholder:text-[#a0aaa2] focus:border-[#6d9b86] focus:ring-2 focus:ring-[#176a5a]/10";
+  const sectionClass = "admin-create-card min-w-0 rounded-lg border border-[#dfe1da] bg-[#fffefa] p-4";
   const secondaryButtonClass = "inline-flex min-h-8 w-fit items-center justify-center rounded-md border border-[#d8e2d9] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#315b48] transition hover:border-[#a7c1ad] hover:bg-[#f5f8f3]";
 
   // Form State
@@ -24,12 +24,8 @@ export default function NewQuestionPage() {
   const [testCases, setTestCases] = useState([]);
   const [expectedTC, setExpectedTC] = useState("");
   const [expectedSC, setExpectedSC] = useState("");
-  const [source, setSource] = useState("admin");
   const [hints, setHints] = useState("");
-  const [leetcodeSlug, setLeetcodeSlug] = useState("");
-  const [leetcodeId, setLeetcodeId] = useState("");
 
-  const [sourceUrl, setSourceUrl] = useState("");
   const [optimalSolutions, setOptimalSolutions] = useState([
     { language: "JavaScript", code: "" },
   ]);
@@ -85,10 +81,6 @@ export default function NewQuestionPage() {
           .split("\n")
           .map((content) => ({ content }))
           .filter((hint) => hint.content.trim()),
-        source,
-        sourceUrl,
-        leetcodeSlug,
-        leetcodeId,
         testCases,
         optimalSolutions,
       };
@@ -115,23 +107,12 @@ export default function NewQuestionPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
+    <main className="admin-page admin-create-page min-h-screen bg-[#f5f7f8] text-[#17221e]">
       <AppHeader />
       <div className="flex min-h-[calc(100vh-60px)] ">
         <Sidebar />
-        <section className="mx-auto w-full max-w-[1440px] flex-1 px-[clamp(20px,3vw,40px)] py-6">
-          <header className="mb-4 grid gap-2 border-b border-[#dfe1da] pb-4">
-            <Link href="/admin" className="w-fit text-xs font-semibold text-[#68766e] no-underline hover:text-[#176a5a]">
-              ← Admin
-            </Link>
-            <div>
-              <h1 className="m-0 text-2xl font-semibold tracking-[-.04em] text-[#123f36]">Add question</h1>
-              <p className="mt-1 text-sm text-[#6f7771]">
-                Create a library question, attach its test cases, and add
-                reference solutions.
-              </p>
-            </div>
-          </header>
+        <section className="admin-create-content mx-auto w-full max-w-[1440px] flex-1 px-[clamp(20px,3vw,40px)] py-6">
+          <h1 className="admin-create-title">Add question</h1>
 
           <form className="grid w-full grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,.9fr)]" onSubmit={handleSave}>
             <section className={`${sectionClass} xl:col-span-2`}>
@@ -139,7 +120,7 @@ export default function NewQuestionPage() {
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-[#e8f1eb] font-mono text-[11px] font-bold text-[#176a5a]">01</span>
                 <div>
                   <h2 className="m-0 text-base font-semibold text-[#24352d]">Question details</h2>
-                  <p className="mt-0.5 text-xs text-[#7b867e]">Title, difficulty, topics, and source.</p>
+                  <p className="mt-0.5 text-xs text-[#7b867e]">Title, difficulty, and topics.</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -174,50 +155,6 @@ export default function NewQuestionPage() {
                     placeholder="Array, Hash Table"
                   />
                 </label>
-                <label className={fieldClass}>
-                  Source
-                  <select
-                    className={inputClass}
-                    value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                  >
-                    <option value="admin">OA Duck</option>
-                    <option value="leetcode">LeetCode</option>
-                    <option value="gfg">GeeksforGeeks</option>
-                  </select>
-                </label>
-                <label className={`${fieldClass} sm:col-span-2 xl:col-span-4`}>
-                  Source URL{source !== "admin" ? " · required" : " · optional"}
-                  <input
-                    className={inputClass}
-                    value={sourceUrl}
-                    onChange={(e) => setSourceUrl(e.target.value)}
-                    required={source !== "admin"}
-                    placeholder="https://..."
-                  />
-                </label>
-                {source === "leetcode" && (
-                  <>
-                    <label className={`${fieldClass} sm:col-span-1 xl:col-span-2`}>
-                      LeetCode slug
-                      <input
-                        className={inputClass}
-                        value={leetcodeSlug}
-                        onChange={(e) => setLeetcodeSlug(e.target.value)}
-                        placeholder="two-sum"
-                      />
-                    </label>
-                    <label className={`${fieldClass} sm:col-span-1 xl:col-span-2`}>
-                      LeetCode ID
-                      <input
-                        className={inputClass}
-                        value={leetcodeId}
-                        onChange={(e) => setLeetcodeId(e.target.value)}
-                        placeholder="1"
-                      />
-                    </label>
-                  </>
-                )}
               </div>
             </section>
 
@@ -497,7 +434,7 @@ export default function NewQuestionPage() {
               </div>
             </section>
 
-            <footer className="sticky bottom-0 z-10 flex items-center justify-end gap-2 rounded-md border border-[#dfe1da] bg-[#fffefa]/95 p-2 backdrop-blur xl:col-span-2">
+            <footer className="admin-create-actions sticky bottom-0 z-10 flex items-center justify-end gap-2 rounded-md border border-[#dfe1da] bg-[#fffefa]/95 p-2 backdrop-blur xl:col-span-2">
               {saveError && <p className="mr-auto text-xs text-[#b33a32]" role="alert">{saveError}</p>}
               <Link
                 href="/admin/questions"
