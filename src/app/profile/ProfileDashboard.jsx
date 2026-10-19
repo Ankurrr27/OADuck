@@ -38,10 +38,10 @@ function languageName(value) {
 
 function StatusCard({ label, value, tone, icon, detail }) {
   const tones = {
-    green: "border-emerald-200 text-emerald-700 bg-emerald-50",
-    amber: "border-amber-200 text-amber-800 bg-amber-50",
-    rose: "border-rose-200 text-rose-700 bg-rose-50",
-    slate: "border-slate-200 text-slate-700 bg-slate-50",
+    green: "border-[#dfe1da] text-[#176a5a] bg-[#fffefa]",
+    amber: "border-[#dfe1da] text-[#176a5a] bg-[#fffefa]",
+    rose: "border-[#dfe1da] text-[#176a5a] bg-[#fffefa]",
+    slate: "border-[#dfe1da] text-[#176a5a] bg-[#fffefa]",
   };
 
   return (
@@ -56,30 +56,20 @@ function StatusCard({ label, value, tone, icon, detail }) {
   );
 }
 
-function ActivityHeatmap({ days, total, currentStreak, longestStreak }) {
+function ActivityHeatmap({ days, total, activeDays, currentStreak, longestStreak }) {
   const weeks = Array.from({ length: 53 }, (_, weekIndex) => days.slice(weekIndex * 7, weekIndex * 7 + 7));
-  const mobileWeeks = weeks.slice(-17);
-  const monthLabels = weeks.map((week, index) => {
-    const date = week[0]?.date ? new Date(`${week[0].date}T00:00:00Z`) : null;
-    const previousDate = index > 0 && weeks[index - 1][0]?.date
-      ? new Date(`${weeks[index - 1][0].date}T00:00:00Z`)
-      : null;
-    return date && (!previousDate || previousDate.getUTCMonth() !== date.getUTCMonth())
-      ? date.toLocaleDateString(undefined, { month: "short", timeZone: "UTC" })
-      : "";
-  });
-  const mobileMonthLabels = mobileWeeks.map((week, index) => {
-    const date = week[0]?.date ? new Date(`${week[0].date}T00:00:00Z`) : null;
-    const previousDate = index > 0 && mobileWeeks[index - 1][0]?.date
-      ? new Date(`${mobileWeeks[index - 1][0].date}T00:00:00Z`)
-      : null;
-    return date && (!previousDate || previousDate.getUTCMonth() !== date.getUTCMonth())
-      ? date.toLocaleDateString(undefined, { month: "short", timeZone: "UTC" })
-      : "";
-  });
+  const monthGroups = weeks.reduce((groups, week) => {
+    const date = week.find((day) => day?.date)?.date;
+    if (!date) return groups;
+    const monthKey = date.slice(0, 7);
+    const existing = groups.find((group) => group.key === monthKey);
+    if (existing) existing.weeks.push(week);
+    else groups.push({ key: monthKey, label: new Date(`${date}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", timeZone: "UTC" }), weeks: [week] });
+    return groups;
+  }, []);
 
   return (
-    <section className="rounded-md border border-slate-200 bg-white p-3 sm:p-5" aria-labelledby="consistency-heading">
+    <section className="profile-heatmap rounded-md border border-slate-200 bg-white p-3 sm:p-5" aria-labelledby="consistency-heading">
       <div className="hidden flex-wrap items-start justify-between gap-3 sm:flex">
         <div>
           <h2 id="consistency-heading" className="m-0 flex items-center gap-2 text-sm font-bold text-slate-900">
@@ -88,9 +78,10 @@ function ActivityHeatmap({ days, total, currentStreak, longestStreak }) {
             <span className="text-[11px] font-normal text-slate-500">{total.toLocaleString()} submissions in the past year</span>
           </h2>
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600">
-          <span>Best streak: <strong className="text-slate-900">{longestStreak} days</strong> <span className="text-orange-500" aria-hidden="true">♨</span></span>
-          <span>Current streak: <strong className="text-emerald-700">{currentStreak} days</strong> <span className="text-orange-500" aria-hidden="true">↗</span></span>
+        <div className="profile-heatmap__metrics flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-600">
+          <span>Total active days: <strong>{activeDays}</strong></span>
+          <span>Max streak: <strong>{longestStreak}</strong></span>
+          <select aria-label="Activity range" defaultValue="current"><option value="current">Current</option></select>
         </div>
       </div>
       <div className="flex items-center justify-between gap-2 sm:hidden">
@@ -101,70 +92,94 @@ function ActivityHeatmap({ days, total, currentStreak, longestStreak }) {
         <span className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-semibold ${currentStreak ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-500"}`}>{currentStreak ? "Active" : "Start today"}</span>
       </div>
 
-      <div className="mt-4 hidden overflow-x-auto pb-2 sm:block" role="group" aria-label="Submission activity by day for the past year">
-        <div className="min-w-[740px]">
-          <div className="grid grid-cols-[24px_repeat(53,minmax(0,1fr))] gap-x-[3px] text-[9px] text-slate-400">
-            <span />
-            {monthLabels.map((month, index) => <span className="h-4" key={index}>{month}</span>)}
-          </div>
-          <div className="grid grid-cols-[24px_repeat(53,minmax(0,1fr))] gap-x-[3px]">
-            <div className="grid grid-rows-7 gap-y-[3px] text-[9px] leading-[10px] text-slate-400">
-              {weekdays.map((day, index) => <span className="h-[11px]" key={index}>{day}</span>)}
+      <div className="mt-4 grid grid-cols-[20px_minmax(0,1fr)] gap-x-2" role="group" aria-label="Submission activity separated by month">
+        <span aria-hidden="true" />
+        <div className="flex min-w-0 items-end">
+          {monthGroups.map((month) => (
+            <div className="min-w-0 border-r border-slate-100 px-1 last:border-r-0" style={{ flex: "0 0 auto", width: `${month.weeks.length * 13}px` }} key={month.key}>
+                <span className="profile-heatmap__month block truncate text-[9px] font-semibold text-slate-400">{month.label}</span>
             </div>
-            {weeks.map((week, weekIndex) => (
-              <div className="grid grid-rows-7 gap-y-[3px]" key={weekIndex}>
-                {week.map((day) => day?.future ? (
-                  <span className="h-[11px]" key={day.date} aria-hidden="true" />
-                ) : (
-                  <span
-                    className="h-[11px] rounded-[2px] ring-1 ring-inset ring-black/[.04]"
-                    key={day?.date || `${weekIndex}-empty`}
-                    title={`${day?.date || ""}: ${day?.count || 0} ${day?.count === 1 ? "submission" : "submissions"}`}
-                    aria-label={`${day?.date || ""}: ${day?.count || 0} ${day?.count === 1 ? "submission" : "submissions"}`}
-                    style={{ backgroundColor: activityColors[day?.level || 0] }}
-                  />
+          ))}
+        </div>
+        <div className="profile-heatmap__weekdays grid grid-rows-7 gap-y-1 text-[7px] leading-[8px] text-slate-400">
+          {weekdays.map((day, index) => <span key={index}>{day ? day[0] : ""}</span>)}
+        </div>
+        <div className="flex min-w-0">
+          {monthGroups.map((month) => (
+            <div className="profile-heatmap__month-group min-w-0 flex-1 border-r border-slate-100 px-1 last:border-r-0" style={{ flex: "0 0 auto", width: `${month.weeks.length * 13}px` }} key={month.key}>
+              <div className="grid h-full gap-x-1" style={{ gridTemplateColumns: `repeat(${month.weeks.length}, 11px)` }}>
+                {month.weeks.map((week, weekIndex) => (
+                  <div className="grid grid-rows-7 gap-y-1" key={`${month.key}-${weekIndex}`}>
+                    {week.map((day) => day?.future ? (
+                      <span className="aspect-square w-full" key={day.date} aria-hidden="true" />
+                    ) : (
+                      <span
+                        className="profile-heatmap__cell aspect-square w-full rounded-[2px] ring-1 ring-inset ring-black/[.04]"
+                        key={day?.date || `${month.key}-${weekIndex}-empty`}
+                        aria-label={`${day?.date || ""}: ${day?.count || 0} ${day?.count === 1 ? "submission" : "submissions"}`}
+                        data-tooltip={`${day?.date ? formatDate(day.date) : "Unknown date"} • ${day?.count || 0} ${day?.count === 1 ? "submission" : "submissions"}`}
+                        style={{ backgroundColor: activityColors[day?.level || 0], minWidth: "11px", minHeight: "11px" }}
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="mt-3 sm:hidden" role="group" aria-label="Submission activity by day for the past four months">
-        <div className="grid grid-cols-[20px_repeat(17,minmax(0,1fr))] gap-x-[3px] text-[8px] text-slate-400">
-          <span />
-          {mobileMonthLabels.map((month, index) => <span className="h-3" key={index}>{month}</span>)}
-        </div>
-        <div className="mt-1 grid grid-cols-[20px_repeat(17,minmax(0,1fr))] gap-x-[3px]">
-          <div className="grid grid-rows-7 gap-y-[3px] text-[8px] leading-[9px] text-slate-400">
-            {weekdays.map((day, index) => <span className="h-[9px]" key={index}>{day}</span>)}
-          </div>
-          {mobileWeeks.map((week, weekIndex) => (
-            <div className="grid grid-rows-7 gap-y-[3px]" key={weekIndex}>
-              {week.map((day) => day?.future ? (
-                <span className="aspect-square w-full" key={day.date} aria-hidden="true" />
-              ) : (
-                <span
-                  className="aspect-square w-full max-w-[10px] justify-self-center rounded-[2px] ring-1 ring-inset ring-black/[.04]"
-                  key={day?.date || `${weekIndex}-empty`}
-                  title={`${day?.date || ""}: ${day?.count || 0} ${day?.count === 1 ? "submission" : "submissions"}`}
-                  aria-label={`${day?.date || ""}: ${day?.count || 0} ${day?.count === 1 ? "submission" : "submissions"}`}
-                  style={{ backgroundColor: activityColors[day?.level || 0] }}
-                />
-              ))}
             </div>
           ))}
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[9px] text-slate-500 sm:mt-0 sm:gap-3 sm:pt-3 sm:text-[10px]">
+      <div className="profile-heatmap__footer mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[9px] text-slate-500 sm:mt-0 sm:gap-3 sm:pt-3 sm:text-[10px]">
         <div className="flex items-center gap-1" aria-label="Activity scale: fewer to more submissions">
           <span className="mr-1">Less</span>
           {activityColors.map((color, index) => <span key={color} className="h-3 w-3 rounded-[2px]" style={{ backgroundColor: color }} aria-label={`${index} activity level`} />)}
           <span className="ml-1">More</span>
         </div>
-        <span className="hidden sm:inline">{total.toLocaleString()} submissions · {currentStreak} day current streak</span>
-        <span className="sm:hidden">Last 4 months</span>
+        <span>{total.toLocaleString()} submissions · {currentStreak} day current streak</span>
       </div>
+    </section>
+  );
+}
+
+function SolvedTopicChart({ topics, solvedCount }) {
+  const visibleTopics = topics;
+  const topicColors = ["#facc15", "#f59e0b", "#f97316", "#ef4444", "#e11d48", "#fb7185", "#dc2626", "#ea580c", "#fbbf24", "#be123c", "#fb923c", "#ca8a04"];
+  const totalTopicSolves = visibleTopics.reduce((total, topic) => total + topic.solved, 0);
+  const chartStops = visibleTopics.map((topic, index) => {
+    const offset = visibleTopics.slice(0, index).reduce((total, item) => total + item.solved, 0);
+    const start = totalTopicSolves ? (offset / totalTopicSolves) * 100 : 0;
+    const end = totalTopicSolves ? ((offset + topic.solved) / totalTopicSolves) * 100 : 0;
+    return `${topicColors[index % topicColors.length]} ${start}% ${end}%`;
+  }).join(", ");
+
+  return (
+    <section className="profile-topic-chart rounded-md border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(20,55,40,.04)] sm:p-4" aria-labelledby="solved-topic-heading">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h2 id="solved-topic-heading" className="m-0 text-xs font-bold text-slate-900 sm:text-sm">Solved by topic</h2>
+          <p className="mb-0 mt-1 text-[10px] text-slate-500">All topics across {solvedCount.toLocaleString()} solved</p>
+        </div>
+        <span className="text-lg text-emerald-700" aria-hidden="true">◈</span>
+      </div>
+      {visibleTopics.length ? (
+        <div className="mt-4 grid items-center gap-4 sm:grid-cols-[minmax(110px,.8fr)_minmax(0,1.2fr)]">
+          <div className="profile-topic-chart__pie mx-auto grid h-28 w-28 place-items-center rounded-full" style={{ background: `conic-gradient(${chartStops})` }} role="img" aria-label={`Solved questions by topic: ${visibleTopics.map((topic) => `${topic.label} ${topic.solved}`).join(", ")}`}>
+            <div className="grid h-[4.7rem] w-[4.7rem] place-items-center rounded-full bg-white text-center">
+              <strong className="text-lg leading-none text-slate-900">{solvedCount}</strong>
+              <span className="text-[9px] text-slate-500">solved</span>
+            </div>
+          </div>
+          <div className="profile-topic-chart__legend grid gap-2">
+            {visibleTopics.map((topic, index) => (
+              <div className="profile-topic-chart__legend-item flex min-w-0 items-center gap-2 text-[10px]" key={topic.label} title={`${topic.label}: ${topic.solved} solved`}>
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: topicColors[index % topicColors.length] }} aria-hidden="true" />
+                <span className="min-w-0 flex-1 truncate text-slate-600">{topic.label}</span>
+                <strong className="shrink-0 text-slate-800">{topic.solved}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : <p className="mb-0 mt-5 text-xs text-slate-500">Solve a problem to see topic trends.</p>}
     </section>
   );
 }
@@ -205,7 +220,7 @@ export default function ProfileDashboard() {
   const avatar = profile?.image && !imageError;
 
   return (
-    <main className="min-h-screen bg-[#f3f6f4] text-slate-900">
+    <main className="profile-page min-h-screen bg-[#f5f4ef] text-slate-900">
       <AppHeader />
       <div className="flex min-h-[calc(100dvh-3.5rem)]">
         <Sidebar />
@@ -273,30 +288,33 @@ export default function ProfileDashboard() {
                 </div>
               </div>
 
-              <div className="mx-4 md:mx-0"><ActivityHeatmap days={stats.activityDays} total={stats.totalSubmissions} currentStreak={stats.currentStreak} longestStreak={stats.longestStreak} /></div>
+              <div className="mx-4 grid gap-3 md:mx-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(360px,1fr)]">
+                <ActivityHeatmap days={stats.activityDays} total={stats.totalSubmissions} activeDays={stats.activeDays} currentStreak={stats.currentStreak} longestStreak={stats.longestStreak} />
+                <SolvedTopicChart topics={stats.topicCounts || []} solvedCount={stats.solvedCount} />
+              </div>
 
-              <section className="mx-4 overflow-hidden rounded-md border border-slate-200 bg-white md:mx-0" aria-labelledby="recent-heading">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5">
+              <section className="profile-recent mx-4 overflow-hidden rounded-md border border-slate-200 bg-white md:mx-0" aria-labelledby="recent-heading">
+                <div className="profile-recent__header flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5">
                   <div>
                     <h2 id="recent-heading" className="m-0 text-xs font-bold text-slate-900 sm:text-sm"><span className="mr-2 text-emerald-700" aria-hidden="true">◷</span>Recent Activity</h2>
                     <p className="mb-0 mt-0.5 text-[9px] text-slate-500">Latest code submissions and trials</p>
                   </div>
-                  <span className="text-[10px] text-slate-500">{stats.recentSubmissions.length} latest</span>
+                  <span className="profile-recent__count text-[10px] text-slate-500">{stats.recentSubmissions.length} latest</span>
                 </div>
                 {stats.recentSubmissions.length ? (
                   <div className="hidden overflow-x-auto sm:block">
-                    <table className="w-full min-w-[620px] border-collapse text-left text-[11px]">
+                    <table className="profile-recent__table w-full min-w-[620px] border-collapse text-left text-[11px]">
                       <thead className="bg-slate-50 text-[9px] uppercase tracking-[.08em] text-slate-500">
                         <tr><th className="px-4 py-3 font-semibold sm:px-5">Problem title</th><th className="px-3 py-3 font-semibold">Difficulty</th><th className="px-3 py-3 font-semibold">Status</th><th className="px-3 py-3 font-semibold">Language</th><th className="px-4 py-3 text-right font-semibold sm:px-5">Submitted</th></tr>
                       </thead>
                       <tbody>
                         {stats.recentSubmissions.map((submission) => (
-                          <tr className="border-t border-slate-100" key={submission.id}>
+                          <tr className="profile-recent__row border-t border-slate-100" key={submission.id}>
                             <td className="max-w-[260px] truncate px-4 py-3.5 font-medium text-slate-800 sm:px-5">
                               {submission.problem ? <Link href={`/questions/${submission.problem.id}`} className="text-inherit no-underline hover:text-emerald-700">{submission.problem.questionNumber}. {submission.problem.title || "Untitled problem"}</Link> : "Problem unavailable"}
                             </td>
-                            <td className="px-3 py-3.5"><span className={`rounded px-1.5 py-1 text-[10px] ${submission.problem?.difficulty?.toLowerCase() === "easy" ? "bg-emerald-50 text-emerald-700" : submission.problem?.difficulty?.toLowerCase() === "hard" ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-700"}`}>{submission.problem?.difficulty || "—"}</span></td>
-                            <td className="px-3 py-3.5"><span className={`inline-flex rounded-full px-2 py-1 text-[10px] ${submission.status?.toLowerCase() === "accepted" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{submission.status}</span></td>
+                            <td className="px-3 py-3.5"><span className={`profile-recent__difficulty rounded px-1.5 py-1 text-[10px] ${submission.problem?.difficulty?.toLowerCase() === "easy" ? "profile-recent__difficulty--easy" : submission.problem?.difficulty?.toLowerCase() === "hard" ? "profile-recent__difficulty--hard" : "profile-recent__difficulty--medium"}`}>{submission.problem?.difficulty || "—"}</span></td>
+                            <td className="px-3 py-3.5"><span className={`profile-recent__status inline-flex rounded-full px-2 py-1 text-[10px] ${submission.status?.toLowerCase() === "accepted" ? "profile-recent__status--accepted" : "profile-recent__status--failed"}`}>{submission.status}</span></td>
                             <td className="px-3 py-3.5 text-slate-600">{languageName(submission.language)}</td>
                             <td className="whitespace-nowrap px-4 py-3.5 text-right text-slate-500 sm:px-5">{formatDate(submission.createdAt)}</td>
                           </tr>
