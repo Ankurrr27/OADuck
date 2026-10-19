@@ -4,19 +4,18 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { usePersistentNavigation } from "./NavigationContext";
 
-export default function Sidebar({ compact = false }) {
+export default function Sidebar({ compact = false, persistentRoot = false }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(200);
   const pathname = usePathname();
   const { data: session } = useSession();
-  const [viewRole, setViewRole] = useState("ADMIN");
+  const [viewRole, setViewRole] = useState(() => typeof window !== "undefined" ? localStorage.getItem("viewRole") || "ADMIN" : "ADMIN");
+  const persistentNavigation = usePersistentNavigation();
 
   useEffect(() => {
     if (session?.user?.role === "ADMIN") {
-      const stored = localStorage.getItem("viewRole");
-      if (stored) setViewRole(stored);
-
       const handleRoleChange = (e) => setViewRole(e.detail);
       window.addEventListener("viewRoleChange", handleRoleChange);
       return () => window.removeEventListener("viewRoleChange", handleRoleChange);
@@ -28,6 +27,8 @@ export default function Sidebar({ compact = false }) {
     window.addEventListener("mobileSidebarToggle", toggleSidebar);
     return () => window.removeEventListener("mobileSidebarToggle", toggleSidebar);
   }, []);
+
+  if (persistentNavigation && !persistentRoot) return <div className="app-sidebar-placeholder" aria-hidden="true" />;
 
   const profileUrl = session?.user?.username 
     ? `/profile/${session.user.username}` 
@@ -67,7 +68,7 @@ export default function Sidebar({ compact = false }) {
         onClick={() => setSidebarOpen(false)}
       />
       <aside
-        className={`app-sidebar ${compact ? "app-sidebar--compact" : ""} fixed left-0 top-14 z-20 flex h-[calc(100dvh-3.5rem)] w-[min(300px,86vw)] flex-col overflow-y-auto border-r border-[#dfe1da] bg-[#fbfcf9] p-3 shadow-[16px_0_40px_rgba(23,34,30,.18)] transition-[width,transform] duration-300 ease-out md:sticky md:top-14 md:left-auto md:shrink-0 md:h-[calc(100dvh-3.5rem)] md:w-[var(--sidebar-width)] md:flex md:flex-col md:overflow-y-auto md:p-3 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
+        className={`app-sidebar ${compact ? "app-sidebar--compact" : ""} ${persistentRoot ? "app-sidebar--persistent-root" : ""} fixed left-0 top-14 z-20 flex h-[calc(100dvh-3.5rem)] w-[min(300px,86vw)] flex-col overflow-y-auto border-r border-[#dfe1da] bg-[#fbfcf9] p-3 shadow-[16px_0_40px_rgba(23,34,30,.18)] transition-[width,transform] duration-300 ease-out md:sticky md:top-14 md:left-auto md:shrink-0 md:h-[calc(100dvh-3.5rem)] md:w-[var(--sidebar-width)] md:flex md:flex-col md:overflow-y-auto md:p-3 md:shadow-none ${sidebarOpen ? "translate-x-0" : "-translate-x-[105%] md:translate-x-0"}`}
         style={{ "--sidebar-width": `${compact ? 68 : sidebarWidth}px` }}
       >
         {session?.user?.role === "ADMIN" && (
