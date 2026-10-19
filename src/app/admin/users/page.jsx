@@ -129,7 +129,7 @@ export default function ManageUsersPage() {
           </div>
 
           {loading ? (
-            <PageLoader />
+            <PageLoader label="Loading users…" />
           ) : error ? (
             <div className="flex flex-col items-center gap-2 py-16 text-center">
               <p style={{ color: "#d32f2f" }}>{error}</p>

@@ -163,11 +163,12 @@ main > div > section > p:first-child[class*="uppercase"] {
 
 .page-loader {
   position: fixed;
+  z-index: 5;
   inset: 0;
-  z-index: 50;
   display: grid;
   place-items: center;
-  background: #f5f4ef;
+  background: transparent;
+  pointer-events: none;
 }
 
 .navigation-duck {

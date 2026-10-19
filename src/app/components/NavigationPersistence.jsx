@@ -20,7 +20,7 @@ function shouldPersistNavigation(pathname) {
 export default function NavigationPersistence({ children }) {
   const pathname = usePathname();
   const { status } = useSession();
-  const persistent = status === "authenticated" && shouldPersistNavigation(pathname);
+  const persistent = status !== "unauthenticated" && shouldPersistNavigation(pathname);
 
   return (
     <NavigationProvider value={persistent}>

@@ -2,6 +2,6 @@ import PageLoader from "./components/PageLoader";
 
 export default function Loading() {
   return (
-    <PageLoader />
+    <PageLoader label="Loading page…" />
   );
 }
