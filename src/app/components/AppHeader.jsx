@@ -38,14 +38,21 @@ export default function AppHeader({ assessmentTimer }) {
   const router = useRouter();
   const pathname = usePathname();
   const isAdmin = session?.user?.role === "ADMIN";
-  const [viewRole, setViewRole] = useState("ADMIN");
+  const [viewRole, setViewRole] = useState(() => typeof window !== "undefined" ? localStorage.getItem("viewRole") || "ADMIN" : "ADMIN");
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {
-    if (isAdmin) {
-      const stored = localStorage.getItem("viewRole");
-      if (stored) setViewRole(stored);
-    }
-  }, [isAdmin]);
+    if (!session?.user?.email) return undefined;
+    let cancelled = false;
+    fetch("/api/profile/stats")
+      .then((response) => response.ok ? response.json() : null)
+      .then((result) => {
+        if (!cancelled && result?.stats) setCurrentStreak(result.stats.currentStreak || 0);
+      })
+      .catch(() => {})
+      .finally(() => {});
+    return () => { cancelled = true; };
+  }, [session?.user?.email]);
 
   function handleRoleChange(e) {
     const newRole = e.target.value;
@@ -79,6 +86,13 @@ export default function AppHeader({ assessmentTimer }) {
             <option value="ADMIN" style={{ color: "#000" }}>Admin View</option>
             <option value="USER" style={{ color: "#000" }}>User View</option>
           </select>
+        )}
+        {!assessmentTimer && session?.user && (
+          <div className="app-header__streak" title={`${currentStreak} day current streak`} aria-label={`${currentStreak} day current streak`}>
+            <span aria-hidden="true">🔥</span>
+            <strong>{currentStreak}</strong>
+            <span className="hidden sm:inline">day streak</span>
+          </div>
         )}
         <ProfileMenu />
         <button className="grid h-10 w-10 place-items-center bg-transparent text-[#f7f5ed] transition hover:text-[#f5c75d] active:scale-95 md:hidden" type="button" onClick={openSidebar} aria-label="Open navigation">

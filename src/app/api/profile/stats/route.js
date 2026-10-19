@@ -25,12 +25,13 @@ export async function GET() {
     const yearStart = new Date(todayUtc);
     yearStart.setUTCDate(yearStart.getUTCDate() - 364);
 
-    const [totalQuestions, acceptedQuestions, statusGroups, activitySubmissions, recentSubmissions, violations, giveUps, difficultyTotals] = await Promise.all([
+    const [totalQuestions, allQuestions, acceptedQuestions, statusGroups, activitySubmissions, recentSubmissions, violations, giveUps, difficultyTotals] = await Promise.all([
       prisma.question.count(),
+      prisma.question.findMany({ select: { topics: true } }),
       prisma.submission.findMany({
         where: { userId: user.id, status: { equals: "Accepted", mode: "insensitive" }, questionId: { not: null } },
         distinct: ["questionId"],
-        select: { questionId: true, problem: { select: { difficulty: true } } },
+        select: { questionId: true, problem: { select: { difficulty: true, topics: true } } },
       }),
       prisma.submission.groupBy({ by: ["status"], where: { userId: user.id }, _count: { _all: true } }),
       prisma.submission.findMany({
@@ -66,9 +67,16 @@ export async function GET() {
       medium: { solved: 0, total: 0 },
       hard: { solved: 0, total: 0 },
     };
+    const topicCounts = new Map();
+    for (const question of allQuestions) {
+      const topics = question.topics?.length ? question.topics : ["Uncategorized"];
+      for (const topic of topics) if (!topicCounts.has(topic)) topicCounts.set(topic, 0);
+    }
     for (const question of acceptedQuestions) {
       const difficulty = question.problem?.difficulty?.toLowerCase();
       if (Object.hasOwn(difficultyCounts, difficulty)) difficultyCounts[difficulty].solved += 1;
+      const topics = question.problem?.topics?.length ? question.problem.topics : ["Uncategorized"];
+      for (const topic of topics) topicCounts.set(topic, (topicCounts.get(topic) || 0) + 1);
     }
     for (const group of difficultyTotals) {
       const difficulty = group.difficulty.toLowerCase();
@@ -130,6 +138,9 @@ export async function GET() {
         totalQuestions,
         completionPercent: totalQuestions ? Math.round((acceptedQuestions.length / totalQuestions) * 100) : 0,
         difficultyCounts,
+        topicCounts: [...topicCounts.entries()]
+          .sort((first, second) => second[1] - first[1] || first[0].localeCompare(second[0]))
+          .map(([label, solved]) => ({ label, solved })),
         acceptedCount,
         timeoutCount,
         violationCount: violations._sum.violationCount || 0,
