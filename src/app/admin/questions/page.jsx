@@ -92,7 +92,7 @@ export default function AdminQuestionsPage() {
           </div>
 
           {loading ? (
-            <PageLoader />
+            <PageLoader label="Loading questions…" />
           ) : filteredQuestions.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-16 text-center">
               <p>No questions found.</p>

@@ -89,9 +89,9 @@ export default function QuestionsPage() {
             </div>
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-lg border border-[#dfe1da] bg-[#fffefa]">
+          <div className={loading ? "mt-3" : "mt-3 overflow-hidden rounded-lg border border-[#dfe1da] bg-[#fffefa]"}>
             {loading ? (
-              <PageLoader />
+              <PageLoader label="Loading questions…" />
             ) : filtered.length === 0 ? (
               <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-[#e8f1eb] text-2xl">⌕</span><h2 className="mt-4 text-lg font-semibold">Nothing here yet</h2><p className="mt-2 max-w-sm text-sm leading-6 text-[#6f7771]">Try another difficulty or import a problem to begin building your library.</p></div>
             ) : (

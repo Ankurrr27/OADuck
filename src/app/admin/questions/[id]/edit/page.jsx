@@ -169,7 +169,7 @@ export default function EditQuestionPage() {
   }
 
   if (pageLoading) {
-    return <PageLoader />;
+    return <PageLoader label="Loading question…" />;
   }
 
   if (loadError) {
