@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import BrandLogo from "./BrandLogo";
 import ProfileMenu from "./ProfileMenu";
+import { usePersistentNavigation } from "./NavigationContext";
 
 function formatTimer(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
@@ -33,11 +34,12 @@ function AssessmentTimer({ startedAt, durationMinutes }) {
   </button>;
 }
 
-export default function AppHeader({ assessmentTimer }) {
+export default function AppHeader({ assessmentTimer, persistentRoot = false }) {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const isAdmin = session?.user?.role === "ADMIN";
+  const persistentNavigation = usePersistentNavigation();
   const [viewRole, setViewRole] = useState(() => typeof window !== "undefined" ? localStorage.getItem("viewRole") || "ADMIN" : "ADMIN");
   const [currentStreak, setCurrentStreak] = useState(0);
 
@@ -70,6 +72,8 @@ export default function AppHeader({ assessmentTimer }) {
   function openSidebar() {
     window.dispatchEvent(new CustomEvent("mobileSidebarToggle"));
   }
+
+  if (persistentNavigation && !persistentRoot && !assessmentTimer) return null;
 
   return (
     <header className={`app-header sticky top-0 z-30 flex h-12 items-center justify-between bg-[#111416] px-4 sm:px-6 md:h-14 md:px-[clamp(24px,6vw,86px)] md:py-0 ${assessmentTimer ? "app-header--assessment" : ""}`}>

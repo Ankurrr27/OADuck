@@ -226,7 +226,7 @@ export default function ProfileDashboard() {
         <Sidebar />
         <section className="mx-auto w-full max-w-[1440px] min-w-0 flex-1 px-3 py-4 sm:px-5 sm:py-5 lg:px-7 max-md:p-0">
           {loading ? (
-            <div className="grid min-h-60 place-items-center"><DuckLoader label="Loading your profile…" /></div>
+            <div className="grid min-h-[calc(100dvh-3.5rem)] place-items-center"><DuckLoader label="Loading your profile…" /></div>
           ) : error ? (
             <div className="rounded-md border border-rose-200 bg-white p-5 text-sm text-rose-700" role="alert">{error}</div>
           ) : (

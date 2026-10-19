@@ -2,7 +2,7 @@ import { Geist_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import SmoothScroll from "./components/SmoothScroll";
-import NavigationDuck from "./components/NavigationDuck";
+import NavigationPersistence from "./components/NavigationPersistence";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col">
         <SmoothScroll />
-        <Providers><NavigationDuck />{children}</Providers>
+        <Providers><NavigationPersistence>{children}</NavigationPersistence></Providers>
       </body>
     </html>
   );

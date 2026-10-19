@@ -53,10 +53,10 @@ export default function PracticePage() {
     router.push(`/questions/${question.id}`);
   }
 
-  const selectClass = "min-h-12 w-full rounded-md border border-white/20 bg-[#0c342d] px-3.5 text-base text-white outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-300/20";
+  const selectClass = "min-h-10 w-full rounded-md border border-white/20 bg-[#0c342d] px-3 text-sm text-white outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-300/20";
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef] text-[#17221e]">
+    <main className="h-[calc(100dvh-3.5rem)] overflow-hidden bg-[#f5f4ef] text-[#17221e]">
       <AppHeader />
       <div className="flex min-h-[calc(100dvh-3.5rem)]">
         <Sidebar />
@@ -91,29 +91,30 @@ export default function PracticePage() {
             </div>
 
             <div className="relative z-10 w-full max-w-4xl">
-              <h1 className="m-0 text-5xl font-semibold leading-tight text-white sm:text-6xl">Start your practice.</h1>
-              <p className="mb-0 mt-4 max-w-none text-lg leading-8 text-emerald-100 sm:mt-5 sm:text-2xl">Randomly pick any topic or difficulty to start practice.</p>
+              <h1 className="m-0 max-w-3xl text-5xl font-semibold leading-tight text-white sm:text-6xl">Start your practice and sharpen your problem-solving skills.</h1>
+              <p className="mb-0 mt-4 max-w-3xl text-lg leading-8 text-emerald-100 sm:mt-5 sm:text-2xl">Choose a topic and difficulty, then jump into a focused challenge picked from your problem library. Keep practicing, build consistency, and turn every attempt into progress.</p>
 
-              <form className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end" onSubmit={startPractice}>
-                <label className="grid gap-2 text-sm font-semibold text-emerald-50">
+              <form className="mt-6 grid gap-3 sm:mt-8 sm:w-fit sm:grid-cols-[minmax(180px,230px)_minmax(180px,230px)_auto] sm:items-end" onSubmit={startPractice}>
+                <label className="grid gap-1.5 text-xs font-semibold text-emerald-50">
                   Topic
                   <select className={selectClass} style={{ color: "#f7f5ed", backgroundColor: "#0c342d" }} value={topic} onChange={(event) => { setTopic(event.target.value); setError(""); }} disabled={loading || starting}>
                     <option style={{ color: "#17221e", backgroundColor: "#fffefa" }}>Any topic</option>
                     {topics.map((value) => <option style={{ color: "#17221e", backgroundColor: "#fffefa" }} key={value}>{value}</option>)}
                   </select>
                 </label>
-                <label className="grid gap-2 text-sm font-semibold text-emerald-50">
+                <label className="grid gap-1.5 text-xs font-semibold text-emerald-50">
                   Difficulty
                   <select className={selectClass} style={{ color: "#f7f5ed", backgroundColor: "#0c342d" }} value={difficulty} onChange={(event) => { setDifficulty(event.target.value); setError(""); }} disabled={loading || starting}>
                     {difficulties.map((value) => <option style={{ color: "#17221e", backgroundColor: "#fffefa" }} key={value}>{value}</option>)}
                   </select>
                 </label>
-                <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-[#f7f5ed] px-6 text-base font-bold text-[#123f36] transition hover:bg-white disabled:cursor-wait disabled:opacity-70 sm:px-7" type="submit" disabled={loading || starting || !questions.length}>
+                <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-[#f7f5ed] px-5 text-sm font-bold text-[#123f36] transition hover:bg-white disabled:cursor-wait disabled:opacity-70 sm:px-6" type="submit" disabled={loading || starting || !questions.length}>
                   {loading ? "Loading…" : starting ? "Starting…" : "Start practice"}<span aria-hidden="true">→</span>
                 </button>
               </form>
 
               {error && <p className="mb-0 mt-4 rounded-md border border-rose-200/25 bg-rose-950/20 px-3 py-2 text-xs text-rose-100" role="alert">{error}</p>}
+
             </div>
           </div>
         </section>
